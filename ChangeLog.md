@@ -1,3 +1,10 @@
+### Unreleased
+
+* Enforce the per-record `max_auth_results` and `max_reasons` limits eagerly during the streaming pre-check, before any DOM is built. Previously a report with one record containing an enormous `auth_results`/`reason` collection reached DOM construction unless another global limit caught it.
+* Require a `<feedback>` root element: well-formed XML that is not a DMARC aggregate report is rejected with `InvalidReport` instead of being parsed into an empty report.
+* Stop echoing libxml2 error text (which can contain tag, attribute or entity names from the untrusted input) in `InvalidReport` messages; report only line and column position.
+* Add near-limit regression tests (reports just below every configured limit still parse) and a deterministic fuzz test that random bytes, tag soup, huge text and many attributes only ever raise `DMARCator::Error`.
+
 ### 1.3.0 / 2026-11-01
 
 * Treat report XML as hostile by rejecting DTD and entity declarations outright (`DMARCator::ForbiddenXml`). DMARC reports never need a DTD, so external-entity (XXE) and entity-expansion (billion-laughs) attacks are rejected before parsing rather than merely having their resolution disabled.

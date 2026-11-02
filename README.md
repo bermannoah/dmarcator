@@ -347,9 +347,13 @@ for the reporting policy and scope.
   rejected outright (`DMARCator::ForbiddenXml`), and parsing disables network
   access, entity substitution, DTD loading, and libxml2's `HUGE` relaxation.
   External-entity (XXE) and entity-expansion (billion-laughs) attacks are
-  therefore impossible rather than merely mitigated.
-* Report structural complexity is bounded before any DOM is built. A report
-  that exceeds a configured limit raises `DMARCator::ReportTooComplex`:
+  therefore impossible rather than merely mitigated. A report must have a
+  `<feedback>` root element; arbitrary well-formed XML is rejected with
+  `DMARCator::InvalidReport`.
+* Report structural complexity is bounded before any DOM is built. Every limit
+  below — including the per-record `auth_results`/`reason` limits — is enforced
+  by a streaming pre-check, so a report that exceeds a configured limit raises
+  `DMARCator::ReportTooComplex` before a DOM is allocated:
 
   | Setting | Default | Bounds |
   |---|---|---|
@@ -367,6 +371,11 @@ for the reporting policy and scope.
   ```ruby
   DMARCator.configure { |config| config.max_report_bytes = 5 * 1024 * 1024 }
   ```
+
+  These limits are not the outer boundary. They bound the work the C parser is
+  asked to do, but a libxml2 bug can still bypass Ruby-level checks. Applications
+  parsing reports from untrusted sources should still run the parse in an
+  isolated worker or subprocess with its own resource limits.
 * A warning is emitted at load time if the bundled `resolv` gem is affected by
   CVE-2026-80212/CVE-2026-80213.
 * Domain names are validated before resolution (labels ≤ 63 octets, total ≤

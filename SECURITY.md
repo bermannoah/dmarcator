@@ -36,9 +36,15 @@ Everything it parses or resolves is untrusted, and the design assumes so:
 - **DMARC records** come from DNS and are parsed by a grammar with input
   bounds; error messages echoing input are truncated.
 - **DMARC XML reports** are untrusted documents. DTDs and entity declarations
-  are rejected outright, network access and entity expansion are disabled, and
-  structural complexity (nodes, depth, records, text and attribute counts) is
-  bounded by configurable limits before a DOM is built.
+  are rejected outright, network access and entity expansion are disabled, the
+  report must have a `<feedback>` root element, and structural complexity
+  (nodes, depth, records, text, attributes and per-record `auth_results`/
+  `reason` entries) is bounded by configurable limits before a DOM is built.
+
+These library limits bound the work the C parser is asked to do, but they are
+not the outer boundary: a `nokogiri`/libxml2 bug could still bypass Ruby-level
+checks. Applications parsing reports from untrusted sources should run the
+parse in an isolated worker or subprocess with its own resource limits.
 - **Domain names** are validated before reaching the resolver.
 - **DNS responses** are validated by the encrypted transports (transaction id,
   question, truncation bit), and TLS certificates are always verified.
@@ -71,9 +77,10 @@ enforced.
 
 The ChangeLog records these, and the README documents the current behaviour:
 DTD and entity declarations rejected outright (XXE and entity expansion are
-impossible), network and DTD loading disabled, report and record size caps,
-structural limits on nodes, depth, text length, attributes and per-record
-entries, `pct`/`ri` range checks, duplicate-tag rejection, strict
+impossible), a required `<feedback>` root element, network and DTD loading
+disabled, report and record size caps, structural limits on nodes, depth, text
+length, attributes and per-record entries (all enforced before a DOM is
+built), `pct`/`ri` range checks, duplicate-tag rejection, strict
 `mailto:`-only report URIs, DNS name validation, TLS verification, and the
 `resolv` CVE guard.
 

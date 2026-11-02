@@ -150,9 +150,8 @@ RSpec.describe 'DMARC XML report hardening' do
         </record></feedback>
       XML
 
-      report = DMARCator::Report.new(xml)
-
-      expect { report.records }.to raise_error(DMARCator::ReportTooComplex, /max_auth_results/)
+      expect { DMARCator::Report.new(xml) }
+        .to raise_error(DMARCator::ReportTooComplex, /max_auth_results/)
     end
 
     it 'rejects excessive reason entries per record' do
@@ -165,9 +164,8 @@ RSpec.describe 'DMARC XML report hardening' do
         </policy_evaluated></row></record></feedback>
       XML
 
-      report = DMARCator::Report.new(xml)
-
-      expect { report.records }.to raise_error(DMARCator::ReportTooComplex, /max_reasons/)
+      expect { DMARCator::Report.new(xml) }
+        .to raise_error(DMARCator::ReportTooComplex, /max_reasons/)
     end
 
     it 'accepts reports within all limits' do
@@ -222,6 +220,141 @@ RSpec.describe 'DMARC XML report hardening' do
       expect {
         DMARCator::Report.new('this is not xml')
       }.to raise_error(DMARCator::InvalidReport)
+    end
+
+    it 'keeps untrusted content out of exception messages' do
+      expect {
+        DMARCator::Report.new('<feedback><unclosed></feedback>')
+      }.to raise_error(DMARCator::InvalidReport) do |error|
+        expect(error.message).to match(/\Ainvalid DMARC XML report( at line \d+, column \d+)?\z/)
+      end
+    end
+  end
+
+  describe 'report shape' do
+    it 'rejects well-formed XML whose root is not <feedback>' do
+      xml = '<not-feedback><version>0.1</version></not-feedback>'
+
+      expect {
+        DMARCator::Report.new(xml)
+      }.to raise_error(DMARCator::InvalidReport, /<feedback> root/)
+    end
+
+    it 'accepts a namespaced <feedback> root' do
+      xml = '<feedback xmlns="urn:ietf:params:xml:ns:dmarc-2.0"><version>0.1</version></feedback>'
+
+      expect(DMARCator::Report.new(xml).version).to eq('0.1')
+    end
+  end
+
+  describe 'near-limit reports' do
+    it 'parses exactly max_report_records records' do
+      DMARCator.configure { |c| c.max_report_records = 3 }
+
+      report = DMARCator::Report.new(records_xml(3))
+
+      expect(report.records.length).to eq(3)
+    end
+
+    it 'parses a report at exactly max_xml_nodes nodes' do
+      DMARCator.configure { |c| c.max_xml_nodes = 3 }
+
+      report = DMARCator::Report.new('<feedback><a>x</a></feedback>')
+
+      expect(report.records).to eq([])
+    end
+
+    it 'parses a report at exactly max_xml_depth' do
+      DMARCator.configure { |c| c.max_xml_depth = 5 }
+
+      report = DMARCator::Report.new(nested_xml(4))
+
+      expect(report.records).to eq([])
+    end
+
+    it 'parses a text node at exactly max_text_length bytes' do
+      DMARCator.configure { |c| c.max_text_length = 5 }
+
+      xml = '<feedback><report_metadata><org_name>abcde</org_name></report_metadata></feedback>'
+
+      expect(DMARCator::Report.new(xml).metadata.org_name).to eq('abcde')
+    end
+
+    it 'parses a report at exactly max_xml_attributes attributes' do
+      DMARCator.configure { |c| c.max_xml_attributes = 2 }
+
+      xml = '<feedback a="1" b="2"><version>0.1</version></feedback>'
+
+      expect(DMARCator::Report.new(xml).version).to eq('0.1')
+    end
+
+    it 'parses exactly max_auth_results entries' do
+      DMARCator.configure { |c| c.max_auth_results = 2 }
+
+      xml = '<feedback><record><auth_results><dkim/><spf/></auth_results></record></feedback>'
+
+      expect(DMARCator::Report.new(xml).records.first.auth_results.length).to eq(2)
+    end
+
+    it 'parses exactly max_reasons entries' do
+      DMARCator.configure { |c| c.max_reasons = 2 }
+
+      xml = '<feedback><record><row><policy_evaluated><reason/><reason/></policy_evaluated></row></record></feedback>'
+
+      expect(DMARCator::Report.new(xml).records.first.reasons.length).to eq(2)
+    end
+  end
+
+  describe 'fuzzing' do
+    def random_bytes(rng, max_length = 512)
+      bytes = Array.new(rng.rand(0..max_length)) { rng.rand(0..255) }
+      bytes.pack('C*')
+    end
+
+    def random_balanced_xml(rng, depth = 0)
+      return "x#{rng.rand(10)}" if depth > 3 || rng.rand < 0.35
+
+      tag = %w[feedback record row auth_results policy_evaluated reason dkim spf a b].sample(random: rng)
+      attrs = Array.new(rng.rand(0..2)) { " a#{rng.rand(100)}=\"v#{rng.rand(100)}\"" }.join
+      children = Array.new(rng.rand(0..3)) { random_balanced_xml(rng, depth + 1) }.join
+
+      "<#{tag}#{attrs}>#{children}</#{tag}>"
+    end
+
+    it 'never raises outside DMARCator::Error for random input' do
+      rng = Random.new(20_261)
+
+      800.times do |i|
+        input = case i % 4
+                when 0 then random_bytes(rng)
+                when 1 then "<feedback>#{'a' * rng.rand(0..2000)}</feedback>"
+                when 2 then random_balanced_xml(rng)
+                else
+                  "<feedback #{Array.new(rng.rand(0..30)) { |j| "a#{j}=\"v\"" }.join}>x</feedback>"
+                end
+
+        begin
+          DMARCator::Report.new(input)
+        rescue DMARCator::Error
+          # expected: any library error is acceptable
+        end
+      end
+    end
+
+    it 'fuzzes the streaming pre-check and the DOM path separately' do
+      rng = Random.new(7)
+
+      300.times do
+        xml = "<feedback>#{random_balanced_xml(rng)}</feedback>"
+        guard = DMARCator::Internal::XmlGuard.new(xml)
+
+        begin
+          guard.check!
+          guard.document
+        rescue DMARCator::Error
+          # expected
+        end
+      end
     end
   end
 end

@@ -106,6 +106,13 @@ RSpec.describe 'public API' do
     end
   end
 
+  describe 'error classes' do
+    it 'keeps security failures rescuable as DMARCator::Error' do
+      expect(DMARCator::ForbiddenXml).to be < DMARCator::Error
+      expect(DMARCator::ReportTooComplex).to be < DMARCator::Error
+    end
+  end
+
   describe 'internals' do
     it 'keeps XML helpers private to the including classes' do
       expect(DMARCator::Internal::XmlHelper.instance_methods(false)).to be_empty

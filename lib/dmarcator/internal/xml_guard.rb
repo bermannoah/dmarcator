@@ -20,7 +20,12 @@ module DMARCator
     # rejected outright, and libxml2 is configured to disable everything that
     # could fetch or expand them. Structural complexity is bounded with a
     # streaming reader pass before any DOM is built, so a report that exceeds a
-    # limit is rejected without first allocating a tree for it.
+    # limit is rejected without first allocating a tree for it. Every configured
+    # limit — including the per-record `auth_results` and `reason` limits — is
+    # enforced here, before DOM allocation.
+    #
+    # A report must have a `<feedback>` root element; arbitrary well-formed XML
+    # that is not a DMARC aggregate report is rejected.
     #
     # Ruby's `Timeout` is deliberately not used here: it cannot reliably
     # interrupt libxml2's C-level parsing. Callers that need a hard wall-clock
@@ -37,6 +42,12 @@ module DMARCator
       # `DOCTYPE`/`ENTITY` nodes, which covers encodings this byte scan cannot
       # see (for example UTF-16).
       FORBIDDEN_DECLARATION = /<!doctype|<!entity/i
+
+      # Message raised when a DTD or entity declaration is present.
+      #
+      # Kept free of input-derived content: declaration details are never
+      # echoed to callers.
+      FORBIDDEN_MESSAGE = 'DMARC XML reports must not contain a DTD or entity declaration'
 
       #
       # Parse options shared by the streaming reader and the DOM parser.
@@ -113,7 +124,7 @@ module DMARCator
 
         return unless haystack.match?(FORBIDDEN_DECLARATION)
 
-        raise ForbiddenXml, 'DMARC XML reports must not contain a DTD or entity declaration'
+        raise ForbiddenXml, FORBIDDEN_MESSAGE
       end
 
       def enforce_structural_limits!
@@ -123,20 +134,49 @@ module DMARCator
         records = 0
         attributes = 0
 
+        stack = []
+        root_seen = false
+        record_auth_results = 0
+        record_reasons = 0
+
         while reader.read
           case reader.node_type
           when Nokogiri::XML::Reader::TYPE_DOCUMENT_TYPE,
                Nokogiri::XML::Reader::TYPE_ENTITY
-            raise ForbiddenXml, 'DMARC XML reports must not contain a DTD or entity declaration'
+            raise ForbiddenXml, FORBIDDEN_MESSAGE
           when Nokogiri::XML::Reader::TYPE_ELEMENT
             nodes += 1
-            records += 1 if reader.name == 'record'
             attributes += reader.attribute_count
 
             enforce(:max_xml_nodes, nodes)
-            enforce(:max_report_records, records)
-            enforce(:max_xml_depth, reader.depth + 1)
             enforce(:max_xml_attributes, attributes)
+            enforce(:max_xml_depth, reader.depth + 1)
+
+            unless root_seen
+              root_seen = true
+
+              unless reader.name == 'feedback'
+                raise InvalidReport, 'DMARC XML report must have a <feedback> root element'
+              end
+            end
+
+            if reader.name == 'record'
+              records += 1
+              enforce(:max_report_records, records)
+
+              record_auth_results = 0
+              record_reasons = 0
+            elsif stack.include?('record')
+              if stack.last == 'auth_results'
+                record_auth_results += 1
+                enforce(:max_auth_results, record_auth_results)
+              elsif stack.last == 'policy_evaluated' && reader.name == 'reason'
+                record_reasons += 1
+                enforce(:max_reasons, record_reasons)
+              end
+            end
+
+            stack.push(reader.name) unless reader.empty_element?
           when Nokogiri::XML::Reader::TYPE_TEXT,
                Nokogiri::XML::Reader::TYPE_CDATA,
                Nokogiri::XML::Reader::TYPE_WHITESPACE,
@@ -149,10 +189,12 @@ module DMARCator
 
             value = reader.value
             enforce(:max_text_length, value.bytesize) if value
+          when Nokogiri::XML::Reader::TYPE_END_ELEMENT
+            stack.pop
           end
         end
       rescue Nokogiri::XML::SyntaxError => e
-        raise InvalidReport, "invalid DMARC XML report: #{e.message}"
+        raise InvalidReport, sanitize_syntax_error(e)
       end
 
       def enforce(setting, value)
@@ -162,12 +204,28 @@ module DMARCator
         raise ReportTooComplex, "DMARC XML report exceeds #{setting} of #{limit}"
       end
 
+      #
+      # Renders a parse error using only position information. Nokogiri's
+      # messages can echo tag, attribute or entity names from the input, and
+      # those are untrusted; line/column numbers are not.
+      #
+      def sanitize_syntax_error(error)
+        line = error.respond_to?(:line) ? error.line : nil
+        column = error.respond_to?(:column) ? error.column : nil
+
+        if line && column
+          "invalid DMARC XML report at line #{line}, column #{column}"
+        else
+          'invalid DMARC XML report'
+        end
+      end
+
       def parse_document
         document = Nokogiri::XML.parse(@xml, nil, nil, self.class.parse_options)
 
         document
       rescue Nokogiri::XML::SyntaxError => e
-        raise InvalidReport, "invalid DMARC XML report: #{e.message}"
+        raise InvalidReport, sanitize_syntax_error(e)
       end
     end
   end
