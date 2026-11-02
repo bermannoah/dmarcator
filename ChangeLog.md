@@ -1,3 +1,11 @@
+### 1.3.0 / 2026-11-01
+
+* Treat report XML as hostile by rejecting DTD and entity declarations outright (`DMARCator::ForbiddenXml`). DMARC reports never need a DTD, so external-entity (XXE) and entity-expansion (billion-laughs) attacks are rejected before parsing rather than merely having their resolution disabled.
+* Parse report XML with an explicit hardening policy: `NONET` on, entity substitution, DTD loading, default DTD attributes and libxml2's `HUGE` relaxation all off, and strict (non-recovering) parsing.
+* Bound report structural complexity with configurable limits enforced by a streaming reader before any DOM is built. Exceeding a limit raises `DMARCator::ReportTooComplex` rather than `InvalidReport`.
+* Add `Config` limits `max_report_records` (10,000), `max_xml_nodes` (100,000), `max_xml_depth` (50), `max_text_length` (1 MiB), `max_xml_attributes` (100,000), `max_auth_results` (100) and `max_reasons` (100).
+* Add `DMARCator::ReportTooComplex` and `DMARCator::ForbiddenXml` error classes (both `DMARCator::Error`).
+
 ### 1.2.1 / 2026-10-30
 
 * Add a record-parser corpus regression net: 143 records (published real-world records plus edge cases) with their accepted outcomes in lenient and strict mode, replayed by the test suite. A parser change that alters how any record parses now fails with a diff. Regenerate with `script/generate_record_corpus.rb`.

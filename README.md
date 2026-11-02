@@ -202,6 +202,15 @@ Process-wide defaults can be set from code, and take precedence over the
 DMARCator.configure do |config|
   config.resolver = DMARCator::Resolver::DoH.new(url: "https://dns.example/dns-query")
   config.max_report_bytes = 5 * 1024 * 1024
+
+  # XML report complexity limits (defaults shown)
+  config.max_report_records = 10_000
+  config.max_xml_nodes = 100_000
+  config.max_xml_depth = 50
+  config.max_text_length = 1 * 1024 * 1024
+  config.max_xml_attributes = 100_000
+  config.max_auth_results = 100
+  config.max_reasons = 100
 end
 ```
 
@@ -334,11 +343,26 @@ DMARC records and XML reports are treated as untrusted input. See
 [SECURITY.md](https://github.com/bermannoah/dmarcator/blob/main/SECURITY.md)
 for the reporting policy and scope.
 
-* XML reports are parsed with network access disabled (`NONET`), so external
-  entities are never resolved or fetched.
-* Reports larger than `DMARCator.config.max_report_bytes` (25 MiB by
-  default) are rejected before parsing. Parsing builds a DOM roughly 13× the
-  input size, so lower the limit to bound memory:
+* XML reports are treated as hostile: DTDs and entity declarations are
+  rejected outright (`DMARCator::ForbiddenXml`), and parsing disables network
+  access, entity substitution, DTD loading, and libxml2's `HUGE` relaxation.
+  External-entity (XXE) and entity-expansion (billion-laughs) attacks are
+  therefore impossible rather than merely mitigated.
+* Report structural complexity is bounded before any DOM is built. A report
+  that exceeds a configured limit raises `DMARCator::ReportTooComplex`:
+
+  | Setting | Default | Bounds |
+  |---|---|---|
+  | `max_report_bytes` | 25 MiB | input size |
+  | `max_report_records` | 10,000 | `record` elements |
+  | `max_xml_nodes` | 100,000 | element/text/comment nodes |
+  | `max_xml_depth` | 50 | element nesting depth |
+  | `max_text_length` | 1 MiB | bytes per text node |
+  | `max_xml_attributes` | 100,000 | attribute nodes |
+  | `max_auth_results` | 100 | `auth_results` entries per record |
+  | `max_reasons` | 100 | `reason` entries per record |
+
+  Lower them to bound memory and CPU for reports from untrusted sources:
 
   ```ruby
   DMARCator.configure { |config| config.max_report_bytes = 5 * 1024 * 1024 }

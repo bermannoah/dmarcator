@@ -22,9 +22,10 @@ RSpec.describe 'public API' do
 
     it 'exposes these constants' do
       expect(DMARCator.constants(false).sort).to eq([
-        :Config, :DNS_TIMEOUTS, :Error, :Internal, :InvalidRecord,
-        :InvalidReport, :MAX_TXT_NAME_LENGTH, :Record, :Report,
-        :ResolutionError, :Resolver, :Uri, :VERSION, :VULNERABLE_RESOLV
+        :Config, :DNS_TIMEOUTS, :Error, :ForbiddenXml, :Internal,
+        :InvalidRecord, :InvalidReport, :MAX_TXT_NAME_LENGTH, :Record,
+        :Report, :ReportTooComplex, :ResolutionError, :Resolver, :Uri,
+        :VERSION, :VULNERABLE_RESOLV
       ])
     end
   end
@@ -86,9 +87,14 @@ RSpec.describe 'public API' do
 
   describe 'DMARCator::Config' do
     it 'exposes the configurable settings' do
-      expect(instance_api(DMARCator::Config)).to eq(
-        [:max_report_bytes, :max_report_bytes=, :resolver, :resolver=]
-      )
+      expect(instance_api(DMARCator::Config)).to eq([
+        :max_auth_results, :max_auth_results=, :max_reasons, :max_reasons=,
+        :max_report_bytes, :max_report_bytes=, :max_report_records,
+        :max_report_records=, :max_text_length, :max_text_length=,
+        :max_xml_attributes, :max_xml_attributes=, :max_xml_depth,
+        :max_xml_depth=, :max_xml_nodes, :max_xml_nodes=, :resolver,
+        :resolver=
+      ])
     end
   end
 

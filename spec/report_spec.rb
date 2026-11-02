@@ -39,7 +39,7 @@ RSpec.describe DMARCator::Report do
     expect { described_class.new(123) }.to raise_error(DMARCator::InvalidReport, /must be a String/)
   end
 
-  it 'does not resolve external entities' do
+  it 'rejects a DTD/entity declaration as ForbiddenXml' do
     xml = <<~XML
       <?xml version="1.0"?>
       <!DOCTYPE feedback [<!ENTITY xxe SYSTEM "file:///etc/hostname">]>
@@ -50,9 +50,9 @@ RSpec.describe DMARCator::Report do
       </feedback>
     XML
 
-    report = described_class.new(xml)
-
-    expect(report.metadata.org_name).to eq('')
+    expect {
+      described_class.new(xml)
+    }.to raise_error(DMARCator::ForbiddenXml, /DTD or entity declaration/)
   end
 
   describe '.max_report_bytes' do

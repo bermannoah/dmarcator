@@ -8,6 +8,8 @@ RSpec.describe 'DMARCator error hierarchy' do
     [
       DMARCator::InvalidRecord,
       DMARCator::InvalidReport,
+      DMARCator::ReportTooComplex,
+      DMARCator::ForbiddenXml,
       DMARCator::ResolutionError
     ].each do |klass|
       expect(klass.ancestors).to include(DMARCator::Error)

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../config'
+require_relative '../exceptions'
 require_relative '../internal/xml_helper'
 require_relative 'auth_result'
 require_relative 'reason'
@@ -106,6 +108,11 @@ module DMARCator
             @spf ||= element.text.freeze
           when 'reason'
             @reason_nodes << element
+
+            if @reason_nodes.length > DMARCator.config.max_reasons
+              raise ReportTooComplex,
+                    "DMARC XML report exceeds max_reasons of #{DMARCator.config.max_reasons} per record"
+            end
           end
         end
       end
@@ -126,6 +133,11 @@ module DMARCator
       def collect_auth_results(auth_results)
         auth_results.element_children.each do |element|
           @auth_result_nodes << element
+
+          if @auth_result_nodes.length > DMARCator.config.max_auth_results
+            raise ReportTooComplex,
+                  "DMARC XML report exceeds max_auth_results of #{DMARCator.config.max_auth_results} per record"
+          end
         end
       end
     end

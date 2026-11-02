@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require 'nokogiri'
-
 require_relative 'config'
+require_relative 'internal/xml_guard'
 require_relative 'internal/xml_helper'
 require_relative 'exceptions'
 require_relative 'report/metadata'
@@ -13,8 +12,10 @@ module DMARCator
   #
   # Represents a parsed DMARC aggregate/forensic XML report.
   #
-  # Parsing disables network access (NONET) so external entities are never
-  # resolved or fetched; treat report XML as untrusted input.
+  # Report XML is treated as untrusted input: DTDs and entity declarations are
+  # rejected, network access and entity expansion are disabled, and structural
+  # complexity (nodes, depth, records, text and attribute counts) is bounded by
+  # {DMARCator.configure} limits before any DOM is built.
   #
   class Report
     include Internal::XmlHelper
@@ -63,6 +64,10 @@ module DMARCator
     # @raise [InvalidReport]
     #   The report is not a String, exceeds
     #   {Config#max_report_bytes}, or is not well-formed XML.
+    # @raise [ForbiddenXml]
+    #   The report contains a DTD or entity declaration.
+    # @raise [ReportTooComplex]
+    #   The report exceeds a configured structural limit.
     #
     def initialize(xml)
       unless xml.is_a?(String)
@@ -77,12 +82,10 @@ module DMARCator
         raise InvalidReport, "DMARC XML report exceeds maximum size of #{limit} bytes"
       end
 
-      @node = Nokogiri::XML(xml) { |config| config.nonet }
+      guard = Internal::XmlGuard.new(xml)
+      guard.check!
 
-      unless @node.errors.empty?
-        raise InvalidReport, "invalid DMARC XML report: #{@node.errors.first}"
-      end
-
+      @node = guard.document
       @node.remove_namespaces!
     end
 

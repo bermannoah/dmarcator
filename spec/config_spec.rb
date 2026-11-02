@@ -92,6 +92,49 @@ RSpec.describe DMARCator::Config do
     end
   end
 
+  describe 'XML report complexity limits' do
+    after { DMARCator.reset_configuration! }
+
+    limits = {
+      max_report_records: described_class::DEFAULT_MAX_REPORT_RECORDS,
+      max_xml_nodes: described_class::DEFAULT_MAX_XML_NODES,
+      max_xml_depth: described_class::DEFAULT_MAX_XML_DEPTH,
+      max_text_length: described_class::DEFAULT_MAX_TEXT_LENGTH,
+      max_xml_attributes: described_class::DEFAULT_MAX_XML_ATTRIBUTES,
+      max_auth_results: described_class::DEFAULT_MAX_AUTH_RESULTS,
+      max_reasons: described_class::DEFAULT_MAX_REASONS
+    }
+
+    limits.each do |setting, default|
+      describe setting.to_s do
+        it 'defaults to the library default' do
+          expect(DMARCator.config.public_send(setting)).to eq(default)
+        end
+
+        it 'accepts a positive Integer' do
+          DMARCator.configure { |config| config.public_send("#{setting}=", 42) }
+
+          expect(DMARCator.config.public_send(setting)).to eq(42)
+        end
+
+        it 'restores the default when set to nil' do
+          DMARCator.configure { |config| config.public_send("#{setting}=", 42) }
+          DMARCator.configure { |config| config.public_send("#{setting}=", nil) }
+
+          expect(DMARCator.config.public_send(setting)).to eq(default)
+        end
+
+        it 'rejects values that are not positive Integers' do
+          [0, -1, '1024', 1.5].each do |value|
+            expect {
+              DMARCator.configure { |config| config.public_send("#{setting}=", value) }
+            }.to raise_error(ArgumentError, /#{setting}/)
+          end
+        end
+      end
+    end
+  end
+
   describe '.reset_configuration!' do
     it 'discards configured values' do
       DMARCator.configure { |config| config.resolver = double('resolver') }

@@ -35,8 +35,10 @@ Everything it parses or resolves is untrusted, and the design assumes so:
 
 - **DMARC records** come from DNS and are parsed by a grammar with input
   bounds; error messages echoing input are truncated.
-- **DMARC XML reports** are untrusted documents. They are parsed with network
-  access disabled (`NONET`), size-capped, and rejected on malformed input.
+- **DMARC XML reports** are untrusted documents. DTDs and entity declarations
+  are rejected outright, network access and entity expansion are disabled, and
+  structural complexity (nodes, depth, records, text and attribute counts) is
+  bounded by configurable limits before a DOM is built.
 - **Domain names** are validated before reaching the resolver.
 - **DNS responses** are validated by the encrypted transports (transaction id,
   question, truncation bit), and TLS certificates are always verified.
@@ -68,8 +70,11 @@ enforced.
 ## Hardening already applied
 
 The ChangeLog records these, and the README documents the current behaviour:
-XXE and entity limits, report and record size caps, `pct`/`ri` range checks,
-duplicate-tag rejection, strict `mailto:`-only report URIs, DNS name
-validation, TLS verification, and the `resolv` CVE guard.
+DTD and entity declarations rejected outright (XXE and entity expansion are
+impossible), network and DTD loading disabled, report and record size caps,
+structural limits on nodes, depth, text length, attributes and per-record
+entries, `pct`/`ri` range checks, duplicate-tag rejection, strict
+`mailto:`-only report URIs, DNS name validation, TLS verification, and the
+`resolv` CVE guard.
 
 [advisories]: https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability
