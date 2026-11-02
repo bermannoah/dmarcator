@@ -25,5 +25,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.required_ruby_version = '>= 3.3.13'
 
-  gem.add_dependency 'nokogiri', '>= 1.10'
+  gem.add_dependency 'nokogiri', '>= 1.19.5'
 end

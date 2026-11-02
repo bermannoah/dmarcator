@@ -1,3 +1,7 @@
+### 1.4.1 / 2026-11-02
+
+* Update `nokogiri` dependency to `>= 1.19.5`, patches CVEs in nokogiri upstream.
+
 ### 1.4.0 / 2026-11-01
 
 * Enforce the per-record `max_auth_results` and `max_reasons` limits eagerly during the streaming pre-check, before any DOM is built. Previously a report with one record containing an enormous `auth_results`/`reason` collection reached DOM construction unless another global limit caught it.
