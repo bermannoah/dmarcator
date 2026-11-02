@@ -1,4 +1,4 @@
-### Unreleased
+### 1.4.0 / 2026-11-01
 
 * Enforce the per-record `max_auth_results` and `max_reasons` limits eagerly during the streaming pre-check, before any DOM is built. Previously a report with one record containing an enormous `auth_results`/`reason` collection reached DOM construction unless another global limit caught it.
 * Require a `<feedback>` root element: well-formed XML that is not a DMARC aggregate report is rejected with `InvalidReport` instead of being parsed into an empty report.
