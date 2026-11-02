@@ -2,16 +2,17 @@
 
 ## Supported versions
 
-Security fixes are released for the latest published version. Older versions
-are not patched; the fix ships in a new release.
+Security fixes are released for the latest published version only. Older
+versions are not patched; the fix ships in a new release.
 
 | Version | Supported |
 |---------|-----------|
-| 0.11.x  | ✅ |
-| < 0.11  | ❌ |
+| 1.4.0   | ✅ |
+| < 1.4.0 | ❌ |
 
-Before 1.0, a security fix may ship in a minor version that also contains
-breaking changes. The ChangeLog marks breaking changes explicitly.
+Since 1.0.0 the public API is frozen, so a security fix ships in a
+backwards-compatible patch or minor release. The ChangeLog marks breaking
+changes explicitly.
 
 ## Reporting a vulnerability
 
@@ -40,14 +41,14 @@ Everything it parses or resolves is untrusted, and the design assumes so:
   report must have a `<feedback>` root element, and structural complexity
   (nodes, depth, records, text, attributes and per-record `auth_results`/
   `reason` entries) is bounded by configurable limits before a DOM is built.
+- **Domain names** are validated before reaching the resolver.
+- **DNS responses** are validated by the encrypted transports (transaction id,
+  question, truncation bit), and TLS certificates are always verified.
 
 These library limits bound the work the C parser is asked to do, but they are
 not the outer boundary: a `nokogiri`/libxml2 bug could still bypass Ruby-level
 checks. Applications parsing reports from untrusted sources should run the
 parse in an isolated worker or subprocess with its own resource limits.
-- **Domain names** are validated before reaching the resolver.
-- **DNS responses** are validated by the encrypted transports (transaction id,
-  question, truncation bit), and TLS certificates are always verified.
 
 Lookup failures fail closed: a transport error raises
 `DMARCator::ResolutionError` rather than being reported as "no DMARC record",
@@ -65,7 +66,7 @@ enforced.
 
 ## Out of scope
 
-- Vulnerabilities in `parslet`, `nokogiri`, or Ruby itself. Report those
+- Vulnerabilities in `nokogiri`, `resolv`, or Ruby itself. Report those
   upstream; the library's load-time guard for known `resolv` issues is a
   warning, not a substitute for patching.
 - The *policy* decisions of an application built on the library, such as
