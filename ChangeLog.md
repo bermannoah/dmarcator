@@ -1,3 +1,7 @@
+### 1.5.0 / 2026-11-19
+
+* Require Ruby >= 3.3.14. The supported minima per series are 3.3.14, 3.4.13, and 4.0.10; CI now tests each minimum instead of 3.3.13 plus latest 4.0.
+
 ### 1.4.1 / 2026-11-02
 
 * Update `nokogiri` dependency to `>= 1.19.5`, patches CVEs in nokogiri upstream.

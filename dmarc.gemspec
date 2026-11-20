@@ -23,7 +23,7 @@ Gem::Specification.new do |gem|
 
   gem.files         = Dir['lib/**/*.rb'] + %w[README.md ChangeLog.md LICENSE.txt]
   gem.require_paths = ["lib"]
-  gem.required_ruby_version = '>= 3.3.13'
+  gem.required_ruby_version = '>= 3.3.14'
 
   gem.add_dependency 'nokogiri', '>= 1.19.5'
 end

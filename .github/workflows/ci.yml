@@ -23,8 +23,9 @@ jobs:
           # Net::HTTP paths used by the DoT and DoH transports.
           - macos-15
         ruby:
-          - '3.3.13' # minimum supported version
-          - '4.0'
+          - '3.3.14' # minimum supported version
+          - '3.4.13'
+          - '4.0.10'
 
     runs-on: ${{ matrix.os }}
 

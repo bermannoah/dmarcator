@@ -332,8 +332,9 @@ removed in the next major release.
 
 ### Ruby support
 
-The minimum is Ruby 3.3.13, the first release in that series with the regular
-expression fixes the library requires. Dropping support for a Ruby series is
+The minimum is Ruby 3.3.14, which includes the regular expression fixes the
+library requires. The supported minima per series are 3.3.14, 3.4.13, and
+4.0.10. Dropping support for a Ruby series is
 the one documented exception to the no-breaking-changes promise: it is announced
 in a minor release and removed in the next major.
 
@@ -389,7 +390,7 @@ for the reporting policy and scope.
 
 ## Requirements
 
-* [Ruby] >= 3.3.13
+* [Ruby] >= 3.3.14
 * [nokogiri] >= 1.10
 
 ## Testing
