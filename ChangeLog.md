@@ -1,3 +1,14 @@
+### 1.7.1 / 2026-11-21
+
+* `DMARCATOR_DNS_TIMEOUT` must be a positive integer. Zero or negative values now raise `ArgumentError` instead of building a resolver that times out immediately.
+* The plaintext transport only retries on transport errors (`ResolutionError`, socket and I/O errors); an unexpected exception propagates instead of being retried across nameservers and reported as a DNS failure.
+* A parsed `Uri` freezes its wrapped `URI` and itself, so `rua`/`ruf` values are fully immutable and the guarantee documented for 1.0.0 holds literally.
+* Add a release-metadata spec keeping `VERSION`, `ChangeLog.md` and `SECURITY.md` in step.
+* CI: audit dependencies with `bundler-audit`, randomize example order, test the minimum `nokogiri` (1.19.5), lint workflows with `actionlint` and `zizmor`, cancel superseded runs, cap job timeouts, and stop persisting checkout credentials.
+* Add RuboCop (`rubocop`, `rubocop-performance`, `rubocop-rspec`) with a project config, and fix its findings: frozen `ATTRIBUTES` constants, `super()` in the resolver constructors, a shadowed `IPAddr::Error` rescue, safe navigation in `Report#version`, and layout corrections.
+
+No public API changes.
+
 ### 1.7.0 / 2026-11-21
 
 Behaviour changes, for RFC 7489 compliance:
