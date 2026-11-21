@@ -69,3 +69,17 @@ jobs:
           gem unpack dmarcator-*.gem --target "$RUNNER_TEMP"
           bundle exec ruby -I "$RUNNER_TEMP"/dmarcator-*/lib \
             -e 'require "dmarcator"; abort "missing VERSION" unless DMARCator::VERSION'
+
+  audit:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ruby/setup-ruby@f9c4492e86def3e644ab32a0ef185eda5b0c20d0 # v1.342.0
+        with:
+          ruby-version: '3.3.14'
+          bundler-cache: true
+
+      - name: Audit dependencies
+        run: bundle exec bundler-audit check --update
