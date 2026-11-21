@@ -74,8 +74,6 @@ module DMARCator
         raise InvalidReport, "DMARC XML report must be a String, got #{xml.class}"
       end
 
-      @xml = xml
-
       limit = DMARCator.config.max_report_bytes
 
       if xml.bytesize > limit

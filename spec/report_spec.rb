@@ -39,6 +39,12 @@ RSpec.describe DMARCator::Report do
     expect { described_class.new(123) }.to raise_error(DMARCator::InvalidReport, /must be a String/)
   end
 
+  it 'does not retain the raw XML after parsing' do
+    report = described_class.new('<feedback/>')
+
+    expect(report.instance_variables).not_to include(:@xml)
+  end
+
   it 'rejects a DTD/entity declaration as ForbiddenXml' do
     xml = <<~XML
       <?xml version="1.0"?>
