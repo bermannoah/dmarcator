@@ -69,9 +69,10 @@ module DMARCator
   #
   # Validates a domain before using it in a DNS query.
   #
-  # Rejects underscores and reserves room for the `_dmarc.` prefix, so this is
-  # the validator for registrable domains rather than arbitrary DNS names.
-  # Use {validate_txt_name} for service labels.
+  # Rejects underscores and enforces the DNS length and label limits, so this
+  # is the validator for registrable domains rather than arbitrary DNS names.
+  # {dmarc} adds the `_dmarc.` prefix; use {validate_txt_name} for service
+  # labels.
   #
   # @param [String] domain
   #   The domain to validate.

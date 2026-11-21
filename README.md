@@ -107,7 +107,7 @@ The lookup methods are named after what they return:
 | `DMARCator.txt_records(name)` | `Array<Resolv::DNS::Resource::IN::TXT>` — the records themselves | one lookup |
 | `DMARCator.txt(name)` | `Array<String>` — every TXT record at `name` | one lookup |
 | `DMARCator.dmarc(domain)` | `String` — the DMARC record text, or `nil` | one lookup |
-| `DMARCator::Record.lookup(domain)` | `Record` — parsed | one lookup + parse (~0.4 ms) |
+| `DMARCator::Record.lookup(domain)` | `Record` — parsed | one lookup + parse (~0.03 ms) |
 | `DMARCator::Record.parse(text)` | `Record` — parsed from a string | parse only |
 
 `DMARCator.txt` is the primitive: unfiltered, in response order, multi-chunk
@@ -176,8 +176,8 @@ domains.each do |domain|
 end
 ```
 
-Notes for large scans: `Record.lookup` adds a parse per domain (~0.4 ms, far
-more than the lookup on a fast resolver); each lookup opens its own TCP
+Notes for large scans: `Record.lookup` adds a parse per domain (~0.03 ms,
+negligible next to the lookup); each lookup opens its own TCP
 connection, so keep one resolver per thread when parallelising; and DoT/DoH add
 a TLS handshake per lookup, so plaintext is the better choice for bulk work.
 
@@ -322,7 +322,8 @@ XML helper, the internal resolver plumbing — may change in a minor release.
 
 * `DMARCator::Record`, `DMARCator::Report` and the parsed value objects are
   read-only after construction and safe to share between threads.
-* The memoized parser and transform are shared, and safe for concurrent use.
+* Record parsing and XML report parsing keep no shared mutable state, so both
+  are safe for concurrent use.
 * Resolvers are not necessarily safe for concurrent lookups: each lookup opens
   its own connection, but `Resolv::DNS` (if you inject one) does not serialise
   queries. Use one resolver per thread, or configure a factory with
@@ -338,11 +339,11 @@ removed in the next major release.
 
 ### Ruby support
 
-The minimum is Ruby 3.3.14, which includes the regular expression fixes the
-library requires. The supported minima per series are 3.3.14, 3.4.13, and
-4.0.10. Dropping support for a Ruby series is
-the one documented exception to the no-breaking-changes promise: it is announced
-in a minor release and removed in the next major.
+The gemspec requires Ruby >= 3.3.14, which includes the regular expression
+fixes the library uses. CI tests the oldest supported patch of each series:
+3.3.14, 3.4.13, and 4.0.10. Dropping support for a Ruby series is the one
+documented exception to the no-breaking-changes promise: it is announced in a
+minor release and removed in the next major.
 
 ## Security
 
@@ -397,7 +398,7 @@ for the reporting policy and scope.
 ## Requirements
 
 * [Ruby] >= 3.3.14
-* [nokogiri] >= 1.10
+* [nokogiri] >= 1.19.5
 
 ## Testing
 

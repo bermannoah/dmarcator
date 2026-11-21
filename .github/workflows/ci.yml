@@ -47,7 +47,7 @@ jobs:
           fix: 'false'
 
       # Must run under bundler: on CI the gems live in vendor/bundle, so a
-      # bare `ruby` cannot resolve parslet.
+      # bare `ruby` cannot resolve `nokogiri`.
       - name: Load with warnings enabled
         run: |
           bundle exec ruby -w -e 'require "dmarcator"' 2> warnings.log
@@ -63,3 +63,9 @@ jobs:
 
       - name: Build gem
         run: gem build dmarc.gemspec
+
+      - name: Smoke-test the built gem
+        run: |
+          gem unpack dmarcator-*.gem --target "$RUNNER_TEMP"
+          bundle exec ruby -I "$RUNNER_TEMP"/dmarcator-*/lib \
+            -e 'require "dmarcator"; abort "missing VERSION" unless DMARCator::VERSION'
