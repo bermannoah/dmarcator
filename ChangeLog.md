@@ -1,3 +1,12 @@
+### 1.6.0 / 2026-11-21
+
+* Reject an injected `Resolv::DNS` that was not constructed with `raise_timeout_errors: true`. By default `Resolv` treats a complete timeout as an empty answer, so a failed lookup was indistinguishable from a name with no records, contradicting the documented fail-closed guarantee. Construct the resolver with `Resolv::DNS.new(raise_timeout_errors: true)`, or use `DMARCator::Resolver::Plain`. This is a behaviour change for callers that inject a bare `Resolv::DNS`.
+* `Record#to_s` preserves the optional `!size` and unit of `rua`/`ruf` URIs. `Array#join` preferred the delegated `to_str`, which returned the bare `mailto:` URI, so serializing a record silently dropped its report-size limits.
+* `Report#metadata` returns an empty `Report::Metadata` when `<report_metadata>` is absent instead of raising `NoMethodError`. `report_metadata` is required by the DMARC schema, but the XML guard only enforces the `<feedback>` root, so a report could omit it and crash the accessor with an error outside `DMARCator::Error`.
+* DNS transaction IDs are drawn from `SecureRandom` rather than `Random`, removing a predictable ID from the plaintext TCP transport.
+
+No public API changes.
+
 ### 1.5.0 / 2026-11-19
 
 * Require Ruby >= 3.3.14. The supported minima per series are 3.3.14, 3.4.13, and 4.0.10; CI now tests each minimum instead of 3.3.13 plus latest 4.0.
