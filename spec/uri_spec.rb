@@ -21,6 +21,11 @@ describe DMARCator::Uri do
       expect(subject.unit).to be unit
     end
 
+    it "freezes the value object and the wrapped URI" do
+      expect(subject).to be_frozen
+      expect(subject.uri).to be_frozen
+    end
+
     context "when size is omitted" do
       subject { described_class.new(uri) }
 

@@ -28,6 +28,9 @@ module DMARCator
     #
     # Initializes the DMARC URI.
     #
+    # The wrapped URI is frozen, and so is the value object, so a parsed URI
+    # cannot be mutated after construction.
+    #
     # @param [URI::MailTo] uri
     #   The `mailto:` URI.
     #
@@ -38,10 +41,12 @@ module DMARCator
     #   The optional size unit.
     #
     def initialize(uri,size=nil,unit=nil)
-      @uri = uri
+      @uri = uri.freeze
 
       @size = size
       @unit = unit
+
+      freeze
     end
 
     #

@@ -108,6 +108,13 @@ describe DMARCator::Record do
         expect(rec.fo).to be_frozen
         expect(rec.fo).to all(be_frozen)
       end
+
+      it 'freezes the parsed report URIs' do
+        rec = subject.parse('v=DMARC1; p=none; rua=mailto:d@example.com')
+
+        expect(rec.rua).to be_frozen
+        expect(rec.rua.first).to be_frozen
+      end
     end
 
     it 'exposes its list attributes frozen' do
