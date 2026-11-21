@@ -49,7 +49,8 @@ module DMARCator
       # @return [DoH]
       #
       # @raise [ArgumentError]
-      #   `DMARCATOR_DOH_URL` is missing or not an HTTPS URL.
+      #   `DMARCATOR_DOH_URL` is missing or not an HTTPS URL, or
+      #   `DMARCATOR_DNS_TIMEOUT` is not a positive integer.
       #
       def self.from_env(env = ENV)
         url = env['DMARCATOR_DOH_URL']
@@ -70,9 +71,7 @@ module DMARCator
       end
 
       def self.timeout_from(env)
-        value = env['DMARCATOR_DNS_TIMEOUT']
-
-        value.nil? || value.empty? ? DEFAULT_TIMEOUT : Integer(value, 10)
+        super(env, DEFAULT_TIMEOUT)
       end
 
       def initialize(url:, ipaddr: nil, timeout: DEFAULT_TIMEOUT)

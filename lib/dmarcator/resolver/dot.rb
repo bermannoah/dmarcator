@@ -47,7 +47,8 @@ module DMARCator
       # @return [DoT]
       #
       # @raise [ArgumentError]
-      #   `DMARCATOR_DOT_SERVER` is missing or malformed.
+      #   `DMARCATOR_DOT_SERVER` is missing or malformed, or
+      #   `DMARCATOR_DNS_TIMEOUT` is not a positive integer.
       #
       def self.from_env(env = ENV)
         server = env['DMARCATOR_DOT_SERVER']
@@ -88,9 +89,7 @@ module DMARCator
       end
 
       def self.timeout_from(env)
-        value = env['DMARCATOR_DNS_TIMEOUT']
-
-        value.nil? || value.empty? ? DEFAULT_TIMEOUT : Integer(value, 10)
+        super(env, DEFAULT_TIMEOUT)
       end
 
       def initialize(host:, port: DEFAULT_PORT, sni: nil, timeout: DEFAULT_TIMEOUT)

@@ -25,6 +25,33 @@ module DMARCator
       MAX_CNAME_DEPTH = 8
 
       #
+      # Reads a positive connect/read timeout in seconds from the environment.
+      #
+      # @param [Hash] env
+      # @param [Integer] default
+      #   The timeout used when `DMARCATOR_DNS_TIMEOUT` is unset or empty.
+      #
+      # @return [Integer]
+      #
+      # @raise [ArgumentError]
+      #   `DMARCATOR_DNS_TIMEOUT` is not a positive integer.
+      #
+      def self.timeout_from(env, default)
+        value = env['DMARCATOR_DNS_TIMEOUT']
+
+        return default if value.nil? || value.empty?
+
+        timeout = Integer(value, 10)
+
+        unless timeout.positive?
+          raise ArgumentError,
+                "DMARCATOR_DNS_TIMEOUT must be a positive integer, got #{value.inspect}"
+        end
+
+        timeout
+      end
+
+      #
       # Looks up resource records, matching `Resolv::DNS#getresources`.
       #
       # @param [String, Resolv::DNS::Name] name

@@ -436,6 +436,14 @@ RSpec.describe 'encrypted DNS transports' do
           described_class.from_env('DMARCATOR_DNS_TIMEOUT' => 'soon')
         }.to raise_error(ArgumentError)
       end
+
+      it 'rejects a non-positive timeout' do
+        %w[0 -1].each do |value|
+          expect {
+            described_class.from_env('DMARCATOR_DNS_TIMEOUT' => value)
+          }.to raise_error(ArgumentError, /positive/)
+        end
+      end
     end
 
     it 'rejects an empty nameserver list' do
@@ -473,6 +481,15 @@ RSpec.describe 'encrypted DNS transports' do
             'DMARCATOR_DNS_TIMEOUT' => 'soon'
           )
         }.to raise_error(ArgumentError)
+      end
+
+      it 'rejects a non-positive timeout' do
+        expect {
+          described_class.from_env(
+            'DMARCATOR_DOH_URL' => 'https://dns.example/dns-query',
+            'DMARCATOR_DNS_TIMEOUT' => '0'
+          )
+        }.to raise_error(ArgumentError, /positive/)
       end
     end
 
@@ -644,6 +661,15 @@ RSpec.describe 'encrypted DNS transports' do
         )
 
         expect(resolver.sni).to eq('dns.example')
+      end
+
+      it 'rejects a non-positive timeout' do
+        expect {
+          described_class.from_env(
+            'DMARCATOR_DOT_SERVER' => 'dns.example',
+            'DMARCATOR_DNS_TIMEOUT' => '-1'
+          )
+        }.to raise_error(ArgumentError, /positive/)
       end
     end
   end

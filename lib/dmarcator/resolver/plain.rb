@@ -43,16 +43,14 @@ module DMARCator
       # @return [Plain]
       #
       # @raise [ArgumentError]
-      #   `DMARCATOR_DNS_TIMEOUT` is not an integer.
+      #   `DMARCATOR_DNS_TIMEOUT` is not a positive integer.
       #
       def self.from_env(env = ENV)
         new(timeout: timeout_from(env))
       end
 
       def self.timeout_from(env)
-        value = env['DMARCATOR_DNS_TIMEOUT']
-
-        value.nil? || value.empty? ? DEFAULT_TIMEOUT : Integer(value, 10)
+        super(env, DEFAULT_TIMEOUT)
       end
 
       #
