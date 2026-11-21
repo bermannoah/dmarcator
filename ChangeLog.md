@@ -1,3 +1,14 @@
+### 1.6.1 / 2026-11-21
+
+* `Uri#to_str` is now defined on `DMARCator::Uri` and returns the same String as `Uri#to_s`, including the optional `!size` and unit. It was previously delegated to the wrapped `URI::MailTo`, so implicit String conversion (`Array#join`, `String#+`) silently dropped the size; `record.rua.join(',')` is now lossless. The contract spec gains `Uri#to_str`; no methods are removed.
+* Freeze the `fo` entries of a parsed `Record`, and the default `fo` value, so the parsed record matches the immutability guarantee documented for 1.0.0.
+* Stop retaining the raw report XML on `DMARCator::Report` after parsing. The input string (up to `max_report_bytes`) was held for the object's lifetime although it is never read again.
+* Close the DoT TCP and SSL sockets when the TLS handshake fails; the sockets were only closed after a successful handshake, leaking a descriptor per failed connection.
+* Only use records in a DNS answer whose owner name matches the queried name, and only follow a CNAME owned by it. A response could otherwise supply a record for a different name.
+* Bound the DoH response body while streaming it, and reject an oversized declared `Content-Length` before reading. The size limit was previously checked only after the whole body had been buffered.
+* Documentation: correct the `nokogiri` minimum (`>= 1.19.5`, not `1.10`), the record parse cost (~0.03 ms, not 0.4 ms), the per-series Ruby support wording, and the stale reference to a memoized parser and transform.
+* CI: smoke-test the built gem so a packaging regression is caught before release.
+
 ### 1.6.0 / 2026-11-21
 
 * Reject an injected `Resolv::DNS` that was not constructed with `raise_timeout_errors: true`. By default `Resolv` treats a complete timeout as an empty answer, so a failed lookup was indistinguishable from a name with no records, contradicting the documented fail-closed guarantee. Construct the resolver with `Resolv::DNS.new(raise_timeout_errors: true)`, or use `DMARCator::Resolver::Plain`. This is a behaviour change for callers that inject a bare `Resolv::DNS`.
