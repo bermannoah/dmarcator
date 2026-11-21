@@ -72,6 +72,11 @@ module DMARCator
     # resolver object is shared by every thread, and `Resolv::DNS` does not
     # serialise concurrent lookups.
     #
+    # A `Resolv::DNS` must be constructed with `raise_timeout_errors: true`;
+    # otherwise it reports a timeout as an empty answer, and a lookup will
+    # reject it with `ArgumentError` rather than mistake a failure for an
+    # absent record.
+    #
     # @return [Object, #call, nil]
     #
     attr_accessor :resolver
@@ -194,7 +199,7 @@ module DMARCator
   # Configures process-wide defaults.
   #
   #   DMARCator.configure do |config|
-  #     config.resolver = -> { Resolv::DNS.new }
+  #     config.resolver = -> { Resolv::DNS.new(raise_timeout_errors: true) }
   #   end
   #
   # When set, a configured resolver takes precedence over `DMARCATOR_DNS` and

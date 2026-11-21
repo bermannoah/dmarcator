@@ -149,7 +149,11 @@ end
 ```
 
 All of these accept an injected resolver, and an injected resolver keeps its
-own configuration (timeouts are only applied to resolvers the library builds):
+own configuration (timeouts are only applied to resolvers the library builds).
+A `Resolv::DNS` must be constructed with `raise_timeout_errors: true`: without
+it, `Resolv` treats a complete timeout as an empty answer, and the lookup would
+be indistinguishable from one for a name with no records. The lookup methods
+reject such a resolver with `ArgumentError` rather than report a false negative.
 
 ```ruby
 resolver = DMARCator::Resolver::DoH.new(url: "https://dns.example/dns-query")
@@ -219,7 +223,7 @@ configure a factory instead:
 
 ```ruby
 DMARCator.configure do |config|
-  config.resolver = -> { Resolv::DNS.new }
+  config.resolver = -> { Resolv::DNS.new(raise_timeout_errors: true) }
 end
 ```
 
@@ -292,9 +296,11 @@ failures raise `DMARCator::ResolutionError`.
 
 Encrypted transports fail closed: a transport failure raises
 `DMARCator::ResolutionError` instead of being reported as a domain without a
-DMARC record. This applies to every transport, including plaintext —
-`Resolv` returns an empty result for NXDOMAIN and raises for timeouts and
-other failures, so a failed lookup is never mistaken for an absent record.
+DMARC record. This applies to every transport the library builds, including
+plaintext. An injected `Resolv::DNS` is the one exception: by default it treats
+a complete timeout as an empty answer, so construct it with
+`raise_timeout_errors: true` — the lookup methods reject one that does not,
+rather than mistake a failed lookup for an absent record.
 Plaintext remains the default because forcing a public resolver breaks private
 and split-horizon zones, and some networks block port 853 or public resolvers.
 

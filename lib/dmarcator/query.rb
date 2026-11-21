@@ -174,7 +174,8 @@ module DMARCator
   #   blocked or degraded resolver cannot be mistaken for an absent record.
   #
   # @raise [ArgumentError]
-  #   The name is not a syntactically valid DNS name.
+  #   The name is not a syntactically valid DNS name, or the injected
+  #   resolver would report a timeout as an absent record.
   #
   # @note Names must be ASCII: pass punycode (A-labels) rather than Unicode.
   #
@@ -207,7 +208,8 @@ module DMARCator
   #   The lookup failed. A failure is never reported as an empty result.
   #
   # @raise [ArgumentError]
-  #   The name is not a syntactically valid DNS name.
+  #   The name is not a syntactically valid DNS name, or the injected
+  #   resolver would report a timeout as an absent record.
   #
   # @note Names must be ASCII: pass punycode (A-labels) rather than Unicode.
   #
@@ -238,7 +240,8 @@ module DMARCator
   #   The lookup failed.
   #
   # @raise [ArgumentError]
-  #   The domain is not a syntactically valid DNS name.
+  #   The domain is not a syntactically valid DNS name, or the injected
+  #   resolver would report a timeout as an absent record.
   #
   # @since 0.8.0
   #
@@ -272,9 +275,11 @@ module DMARCator
   # @api private
   #
   def self.lookup_txt(name, resolver:)
-    # Resolv returns an empty result for NXDOMAIN and raises for timeouts and
-    # other failures, so any exception here is a transport failure, not an
-    # absent record.
+    ensure_fail_closed!(resolver)
+
+    # With a fail-closed resolver, Resolv returns an empty result for NXDOMAIN
+    # and raises for timeouts and other failures, so any exception here is a
+    # transport failure, not an absent record.
     begin
       records = resolver.getresources(name, Resolv::DNS::Resource::IN::TXT)
     rescue Resolv::ResolvError => error
@@ -284,6 +289,56 @@ module DMARCator
     records
   end
   private_class_method :lookup_txt
+
+  #
+  # Determines whether a resolver reports a timeout instead of returning an
+  # empty answer.
+  #
+  # `Resolv::DNS` treats a complete timeout as an empty answer unless it was
+  # constructed with `raise_timeout_errors: true`. The flag is only settable
+  # through the constructor and `Resolv` exposes no reader for it, so it is
+  # read from the retained configuration.
+  #
+  # @param [Object] resolver
+  #
+  # @return [Boolean]
+  #
+  # @api private
+  #
+  def self.resolv_fails_closed?(resolver)
+    return true unless resolver.is_a?(Resolv::DNS)
+
+    config = resolver.instance_variable_get(:@config)
+    return false unless config
+
+    info = config.instance_variable_get(:@config_info)
+    return false unless info.is_a?(Hash)
+
+    !!info[:raise_timeout_errors]
+  end
+  private_class_method :resolv_fails_closed?
+
+  #
+  # Rejects a resolver that would report a failed lookup as an absent record.
+  #
+  # @param [Object] resolver
+  #
+  # @raise [ArgumentError]
+  #   The resolver is a `Resolv::DNS` that does not raise on timeout.
+  #
+  # @api private
+  #
+  def self.ensure_fail_closed!(resolver)
+    return if resolv_fails_closed?(resolver)
+
+    raise ArgumentError,
+          'a Resolv::DNS resolver swallows timeout errors unless constructed ' \
+          'with raise_timeout_errors: true, so a failed lookup cannot be ' \
+          'distinguished from a name with no records; use ' \
+          'Resolv::DNS.new(raise_timeout_errors: true) or ' \
+          'DMARCator::Resolver::Plain'
+  end
+  private_class_method :ensure_fail_closed!
 end
 
 if DMARCator.vulnerable_resolv?

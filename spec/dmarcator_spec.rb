@@ -170,6 +170,24 @@ describe DMARCator do
       expect { subject.txt("#{'a' * 64}.example.com") }.to raise_error(ArgumentError)
       expect { subject.txt("#{'a' * 63}.#{'a' * 63}.#{'a' * 63}.#{'a' * 62}") }.to raise_error(ArgumentError)
     end
+
+    describe "an injected Resolv::DNS" do
+      it "rejects one that would swallow timeout errors" do
+        expect {
+          subject.txt("_dmarc.example.com", resolver: Resolv::DNS.new)
+        }.to raise_error(ArgumentError, /raise_timeout_errors: true/)
+      end
+
+      it "accepts one constructed to raise on timeout" do
+        fail_closed = Resolv::DNS.new(raise_timeout_errors: true)
+        allow(fail_closed).to receive(:getresources)
+          .with("_dmarc.example.com", txt_class)
+          .and_return([txt(["v=DMARC1; p=none"])])
+
+        expect(subject.txt("_dmarc.example.com", resolver: fail_closed))
+          .to eq(["v=DMARC1; p=none"])
+      end
+    end
   end
 
   describe ".txt_records" do
