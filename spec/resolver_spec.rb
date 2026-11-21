@@ -347,6 +347,15 @@ RSpec.describe 'encrypted DNS transports' do
       }.to raise_error(DMARCator::ResolutionError, /DNS lookup failed/)
     end
 
+    it 'does not swallow an unexpected transport error' do
+      resolver = described_class.new(nameservers: [['127.0.0.1', 53]], timeout: 1)
+      allow(resolver).to receive(:request).and_raise(NoMethodError, 'bug')
+
+      expect {
+        resolver.getresources(name, txt_class)
+      }.to raise_error(NoMethodError)
+    end
+
     it 'tries the next nameserver when the first fails' do
       with_tcp_server(->(query) { answer_with(query, ['v=DMARC1; p=reject']) }) do |port|
         closed = TCPServer.new('127.0.0.1', 0)

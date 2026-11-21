@@ -89,7 +89,9 @@ module DMARCator
         @nameservers.each do |host, port|
           begin
             return request(host, port, wire)
-          rescue StandardError => error
+          rescue ResolutionError, SystemCallError, SocketError, IOError => error
+            # Try the remaining nameservers, but do not swallow an error that
+            # indicates a bug in the transport.
             last_error = error
           end
         end
