@@ -306,5 +306,22 @@ describe DMARCator::Record do
     it "should convert the record to a String" do
       expect(subject.to_s).to be == "v=#{v}; p=#{p}; rua=#{rua[0]}; ruf=#{ruf[0]}; fo=#{fo[0]}:#{fo[1]}:#{fo[2]}"
     end
+
+    it "preserves report URI sizes and units" do
+      record = DMARCator::Record.parse(
+        "v=DMARC1; p=reject; rua=mailto:d@example.com!10m; ruf=mailto:f@example.com!5g"
+      )
+
+      expect(record.to_s).to include("rua=mailto:d@example.com!10m")
+      expect(record.to_s).to include("ruf=mailto:f@example.com!5g")
+    end
+
+    it "round-trips report URI sizes and units" do
+      record = DMARCator::Record.parse(
+        "v=DMARC1; p=reject; rua=mailto:d@example.com!10m"
+      )
+
+      expect(DMARCator::Record.parse(record.to_s).to_h).to eq(record.to_h)
+    end
   end
 end

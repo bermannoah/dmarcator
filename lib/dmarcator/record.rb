@@ -353,8 +353,8 @@ module DMARCator
       tags << "v=#{@v}"               if @v
       tags << "p=#{@p}"               if @p
       tags << "sp=#{@sp}"             if @sp
-      tags << "rua=#{@rua.join(',')}" if @rua
-      tags << "ruf=#{@ruf.join(',')}" if @ruf
+      tags << "rua=#{@rua.map(&:to_s).join(',')}" if @rua
+      tags << "ruf=#{@ruf.map(&:to_s).join(',')}" if @ruf
       tags << "adkim=#{@adkim}"       if @adkim
       tags << "aspf=#{@aspf}"         if @aspf
       tags << "ri=#{@ri}"             if @ri
