@@ -101,7 +101,7 @@ RSpec.describe 'public API' do
   describe 'DMARCator::Uri' do
     it 'exposes these instance methods' do
       expect(instance_api(DMARCator::Uri)).to eq(
-        [:==, :eql?, :hash, :size, :size?, :to_s, :unit, :unit?, :uri]
+        [:==, :eql?, :hash, :size, :size?, :to_s, :to_str, :unit, :unit?, :uri]
       )
     end
   end

@@ -115,6 +115,21 @@ module DMARCator
       return str
     end
 
+    #
+    # Converts the DMARC URI into a String.
+    #
+    # Same as {#to_s}. It is defined so implicit String conversion, such as
+    # `Array#join` or `String#+`, keeps the optional size and unit instead of
+    # falling through to the wrapped URI.
+    #
+    # @return [String]
+    #
+    # @since 1.6.1
+    #
+    def to_str
+      to_s
+    end
+
     private
 
     #

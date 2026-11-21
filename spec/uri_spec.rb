@@ -179,6 +179,17 @@ describe DMARCator::Uri do
     end
   end
 
+  describe "#to_str" do
+    it "should return the same form as #to_s" do
+      expect(subject.to_str).to be == "#{uri}!#{size}#{unit}"
+    end
+
+    it "should be used by Array#join and String#+" do
+      expect([subject].join(",")).to be == subject.to_s
+      expect("x" + subject).to be == "x#{subject}"
+    end
+  end
+
   describe "#method_missing" do
     it "should pass through methods to uri" do
       expect(subject.host).to be(uri.host)
