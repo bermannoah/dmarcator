@@ -102,25 +102,40 @@ module DMARCator
         request['accept'] = CONTENT_TYPE
         request.body = query.encode
 
-        response = http.start { |connection| connection.request(request) }
+        body = +''.b
 
-        status = response.code.to_i
+        http.start do |connection|
+          connection.request(request) do |response|
+            status = response.code.to_i
 
-        unless status.between?(200, 299)
-          raise ResolutionError, "DoH endpoint returned HTTP #{status}"
-        end
+            unless status.between?(200, 299)
+              raise ResolutionError, "DoH endpoint returned HTTP #{status}"
+            end
 
-        content_type = response['content-type'].to_s
+            content_type = response['content-type'].to_s
 
-        unless content_type.start_with?(CONTENT_TYPE)
-          raise ResolutionError, "DoH endpoint returned unexpected content-type: #{content_type.inspect}"
-        end
+            unless content_type.start_with?(CONTENT_TYPE)
+              raise ResolutionError,
+                    "DoH endpoint returned unexpected content-type: #{content_type.inspect}"
+            end
 
-        body = response.body.to_s.b
+            # Reject a declared oversize before reading anything, then enforce
+            # the same bound while streaming, so a chunked or lying response
+            # cannot allocate more than the limit.
+            if response['content-length'].to_i > MAX_RESPONSE_BYTES
+              raise ResolutionError,
+                    "DoH response exceeds maximum size of #{MAX_RESPONSE_BYTES} bytes"
+            end
 
-        if body.bytesize > MAX_RESPONSE_BYTES
-          raise ResolutionError,
-                "DoH response exceeds maximum size of #{MAX_RESPONSE_BYTES} bytes"
+            response.read_body do |chunk|
+              body << chunk.b
+
+              if body.bytesize > MAX_RESPONSE_BYTES
+                raise ResolutionError,
+                      "DoH response exceeds maximum size of #{MAX_RESPONSE_BYTES} bytes"
+              end
+            end
+          end
         end
 
         body

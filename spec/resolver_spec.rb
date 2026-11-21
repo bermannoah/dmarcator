@@ -478,15 +478,20 @@ RSpec.describe 'encrypted DNS transports' do
         allow(http).to receive(:read_timeout=)
         allow(http).to receive(:write_timeout=)
         allow(http).to receive(:start).and_yield(http)
-        allow(http).to receive(:request).and_return(response)
+        allow(http).to receive(:request).and_yield(response).and_return(response)
 
         http
       end
 
-      def stub_response(code: '200', body: '', content_type: 'application/dns-message')
-        response = instance_double(Net::HTTPResponse, code: code, body: body)
+      def stub_response(code: '200', body: '', content_type: 'application/dns-message',
+                        content_length: nil, chunks: nil)
+        response = instance_double(Net::HTTPResponse, code: code)
 
         allow(response).to receive(:[]).with('content-type').and_return(content_type)
+        allow(response).to receive(:[]).with('content-length').and_return(content_length)
+        allow(response).to receive(:read_body) do |&block|
+          (chunks || [body]).each { |chunk| block.call(chunk) unless chunk.empty? }
+        end
 
         response
       end
@@ -497,10 +502,10 @@ RSpec.describe 'encrypted DNS transports' do
 
         expect(http).to receive(:use_ssl=).with(true)
         expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-        expect(http).to receive(:request) do |request|
+        expect(http).to receive(:request) do |request, &block|
           expect(request['content-type']).to eq('application/dns-message')
           expect(request.body).to eq(wire)
-          stub_response(body: wire)
+          block.call(stub_response(body: wire))
         end
 
         expect(resolver.send(:exchange, Resolv::DNS::Message.new(1))).to eq(wire)
@@ -529,6 +534,35 @@ RSpec.describe 'encrypted DNS transports' do
         expect {
           resolver.send(:exchange, Resolv::DNS::Message.new(1))
         }.to raise_error(DMARCator::ResolutionError, /exceeds maximum size/)
+      end
+
+      it 'raises before reading a body whose declared length is oversized' do
+        response = stub_response(
+          body: 'ok', content_length: (described_class::MAX_RESPONSE_BYTES + 1).to_s
+        )
+        stub_http(response)
+
+        expect(response).not_to receive(:read_body)
+
+        expect {
+          resolver.send(:exchange, Resolv::DNS::Message.new(1))
+        }.to raise_error(DMARCator::ResolutionError, /exceeds maximum size/)
+      end
+
+      it 'raises when streamed chunks exceed the limit without a declared length' do
+        half = 'x' * (described_class::MAX_RESPONSE_BYTES / 2 + 1)
+        stub_http(stub_response(chunks: [half, half]))
+
+        expect {
+          resolver.send(:exchange, Resolv::DNS::Message.new(1))
+        }.to raise_error(DMARCator::ResolutionError, /exceeds maximum size/)
+      end
+
+      it 'accepts a body at exactly the limit' do
+        body = 'x' * described_class::MAX_RESPONSE_BYTES
+        stub_http(stub_response(body: body))
+
+        expect(resolver.send(:exchange, Resolv::DNS::Message.new(1))).to eq(body.b)
       end
 
       it 'wraps transport errors' do
