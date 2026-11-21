@@ -1,3 +1,15 @@
+### 1.7.0 / 2026-11-21
+
+Behaviour changes, for RFC 7489 compliance:
+
+* DMARC tag names and keyword values are now matched case-insensitively, as RFC 7489's ABNF (RFC 5234) requires. `P=REJECT`, `SP=Quarantine`, `ADKIM=S`, `RF=AFRF`, `FO=1:D` and `rua=mailto:d@example.com!10M` all parse, and the values are normalized to lower-case atoms (`record.p == :reject`). The version string remains exact: `v=dmarc1` is still rejected, while `V=DMARC1` is accepted because the tag name is case-insensitive. `DMARCator.dmarc` selects records that begin with the version tag under the same rules.
+* A duplicate `v=` tag is now malformed and raises `InvalidRecord` in both modes. It was previously ignored in lenient mode.
+* A known tag with an empty value is reported as `empty DMARC tag value` in strict mode instead of `unknown DMARC tag`.
+* A `rua`/`ruf` size limit may now use up to 20 digits, provided it fits an unsigned 64-bit integer as RFC 7489 requires. The previous cap was ten digits.
+* `DMARCator.validate_domain` caps a domain at 246 octets rather than 248, reserving the seven octets of the `_dmarc.` prefix within the 253-octet DNS name limit. Domains of 247 or 248 octets are now rejected.
+
+The record-parser corpus has been regenerated to record these outcomes, and new cases cover mixed-case tags, mixed-case values and units, uint64 size limits, duplicate version tags and empty tag values.
+
 ### 1.6.1 / 2026-11-21
 
 * `Uri#to_str` is now defined on `DMARCator::Uri` and returns the same String as `Uri#to_s`, including the optional `!size` and unit. It was previously delegated to the wrapped `URI::MailTo`, so implicit String conversion (`Array#join`, `String#+`) silently dropped the size; `record.rua.join(',')` is now lossless. The contract spec gains `Uri#to_str`; no methods are removed.
