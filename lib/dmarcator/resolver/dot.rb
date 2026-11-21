@@ -125,22 +125,24 @@ module DMARCator
 
       def with_tls
         tcp = Socket.tcp(@host, @port, connect_timeout: @timeout)
-        tcp.timeout = @timeout if tcp.respond_to?(:timeout=)
-
-        context = OpenSSL::SSL::SSLContext.new
-        context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        context.set_params
-
-        socket = OpenSSL::SSL::SSLSocket.new(tcp, context)
-        socket.hostname = @sni unless ip_literal?(@sni)
-        socket.sync_close = true
-        socket.connect
-        socket.post_connection_check(@sni)
+        socket = nil
 
         begin
+          tcp.timeout = @timeout if tcp.respond_to?(:timeout=)
+
+          context = OpenSSL::SSL::SSLContext.new
+          context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          context.set_params
+
+          socket = OpenSSL::SSL::SSLSocket.new(tcp, context)
+          socket.hostname = @sni unless ip_literal?(@sni)
+          socket.sync_close = true
+          socket.connect
+          socket.post_connection_check(@sni)
+
           yield socket
         ensure
-          close_quietly(socket)
+          close_quietly(socket) if socket
           close_quietly(tcp)
         end
       end

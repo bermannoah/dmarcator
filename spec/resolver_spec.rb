@@ -516,6 +516,26 @@ RSpec.describe 'encrypted DNS transports' do
 
     it_behaves_like 'an encrypted transport'
 
+    describe 'when the TLS handshake fails' do
+      it 'closes both sockets' do
+        tcp = double('tcp', close: nil)
+        allow(Socket).to receive(:tcp).and_return(tcp)
+
+        ssl = double('ssl', close: nil)
+        allow(ssl).to receive(:hostname=)
+        allow(ssl).to receive(:sync_close=)
+        allow(ssl).to receive(:connect).and_raise(OpenSSL::SSL::SSLError, 'handshake failed')
+        allow(OpenSSL::SSL::SSLSocket).to receive(:new).and_return(ssl)
+
+        expect {
+          resolver.send(:exchange, Resolv::DNS::Message.new(1))
+        }.to raise_error(DMARCator::ResolutionError, /DoT request failed/)
+
+        expect(tcp).to have_received(:close)
+        expect(ssl).to have_received(:close)
+      end
+    end
+
     describe '.split_server' do
       it 'defaults the port' do
         expect(described_class.split_server('dns.example')).to eq(['dns.example', 853])
