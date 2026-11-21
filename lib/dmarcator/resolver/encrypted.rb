@@ -69,11 +69,17 @@ module DMARCator
       end
 
       def collect(message, name, type, depth)
-        matching = message.answer.select { |_name, _ttl, record| record.is_a?(type) }
+        # Only answers owned by the queried name are usable: a response may
+        # carry records for other owners (an injected CNAME chain, or a
+        # malicious answer), and accepting them would let the transport return
+        # a record for a different name.
+        matching = message.answer.select do |owner, _ttl, record|
+          record.is_a?(type) && same_name?(owner, name)
+        end
         return matching.map { |_name, _ttl, record| record } unless matching.empty?
 
-        cname = message.answer.find do |_name, _ttl, record|
-          record.is_a?(Resolv::DNS::Resource::IN::CNAME)
+        cname = message.answer.find do |owner, _ttl, record|
+          record.is_a?(Resolv::DNS::Resource::IN::CNAME) && same_name?(owner, name)
         end
 
         return fetch(cname[2].name, type, depth - 1) if cname && depth.positive?

@@ -113,6 +113,36 @@ RSpec.describe 'encrypted DNS transports' do
       expect(records.map(&:strings)).to eq([['v=DMARC1; p=reject']])
     end
 
+    it 'ignores answers owned by another name' do
+      allow(resolver).to receive(:exchange) do |query|
+        response_for(query, answers: [['_dmarc.attacker.test', 300, txt('v=DMARC1; p=none')]])
+      end
+
+      expect(resolver.getresources(name, txt_class)).to eq([])
+    end
+
+    it 'does not follow a CNAME owned by another name' do
+      allow(resolver).to receive(:exchange) do |query|
+        if query.question.first[0].to_s.include?('attacker')
+          response_for(query, answers: [[query.question.first[0], 60, txt('v=DMARC1; p=none')]])
+        else
+          cname = Resolv::DNS::Resource::IN::CNAME.new(Resolv::DNS::Name.create('_dmarc.attacker.test'))
+          response_for(query, answers: [['_dmarc.other.test', 60, cname]])
+        end
+      end
+
+      expect(resolver.getresources(name, txt_class)).to eq([])
+    end
+
+    it 'matches answer owners case-insensitively and ignoring the root dot' do
+      allow(resolver).to receive(:exchange) do |query|
+        response_for(query, answers: [['_DMARC.Example.COM.', 300, txt('v=DMARC1; p=reject')]])
+      end
+
+      expect(resolver.getresources(name, txt_class).map(&:strings))
+        .to eq([['v=DMARC1; p=reject']])
+    end
+
     it 'draws the transaction id from a secure random source' do
       allow(SecureRandom).to receive(:random_number).with(0x10000).and_return(0x1234)
 
