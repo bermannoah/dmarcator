@@ -34,6 +34,10 @@ module DMARCator
     # @return [:DMARC1]
     attr_reader :v
 
+    # Default value of the `fo=` field.
+    DEFAULT_FO = %w[0].freeze
+    private_constant :DEFAULT_FO
+
     #
     # Initializes the record.
     #
@@ -66,7 +70,7 @@ module DMARCator
       @v     = attributes.fetch(:v)
       @adkim = attributes[:adkim]
       @aspf  = attributes[:aspf]
-      @fo    = attributes[:fo]&.freeze
+      @fo    = attributes[:fo]&.map(&:freeze)&.freeze
       @p     = attributes[:p]
       @pct   = attributes[:pct]
       @rf    = attributes[:rf]
@@ -157,7 +161,7 @@ module DMARCator
     #   The value of the `fo=` field, or `["0"]` if the field was omitted.
     #
     def fo
-      @fo || %w[0]
+      @fo || DEFAULT_FO
     end
 
     #

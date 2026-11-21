@@ -53,6 +53,11 @@ describe DMARCator::Record do
       it "should return ['0']" do
         expect(subject.fo).to be == ['0']
       end
+
+      it "returns a frozen default" do
+        expect(subject.fo).to be_frozen
+        expect(subject.fo.first).to be_frozen
+      end
     end
 
     describe "#pct" do
@@ -95,6 +100,13 @@ describe DMARCator::Record do
         rec = subject.parse('v=DMARC1; p=none; rua=mailto:user+tag@example.com')
 
         expect(rec.rua).to eq([DMARCator::Uri.new(URI('mailto:user+tag@example.com'))])
+      end
+
+      it 'freezes the parsed fo entries' do
+        rec = subject.parse('v=DMARC1; p=reject; fo=0:1')
+
+        expect(rec.fo).to be_frozen
+        expect(rec.fo).to all(be_frozen)
       end
     end
 
