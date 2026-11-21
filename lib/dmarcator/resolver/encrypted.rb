@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'resolv'
+require 'securerandom'
 
 require_relative '../exceptions'
 
@@ -51,7 +52,10 @@ module DMARCator
       end
 
       def fetch(name, type, depth)
-        id = Random.rand(0x10000)
+        # A predictable transaction ID would let an off-path attacker guess the
+        # query before it is answered. Over TLS this is already unreachable, but
+        # the plaintext TCP transport shares this code path.
+        id = SecureRandom.random_number(0x10000)
         message = decode_response(exchange(build_query(id, name, type)), id, name, type)
 
         case message.rcode

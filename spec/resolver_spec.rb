@@ -113,6 +113,20 @@ RSpec.describe 'encrypted DNS transports' do
       expect(records.map(&:strings)).to eq([['v=DMARC1; p=reject']])
     end
 
+    it 'draws the transaction id from a secure random source' do
+      allow(SecureRandom).to receive(:random_number).with(0x10000).and_return(0x1234)
+
+      seen = nil
+      allow(resolver).to receive(:exchange) do |query|
+        seen = query.id
+        response_for(query, answers: [[name, 300, txt('v=DMARC1; p=reject')]])
+      end
+
+      resolver.getresources(name, txt_class)
+
+      expect(seen).to eq(0x1234)
+    end
+
     it 'returns an empty array for NXDOMAIN' do
       allow(resolver).to receive(:exchange) do |query|
         response_for(query, rcode: Resolv::DNS::RCode::NXDomain)
