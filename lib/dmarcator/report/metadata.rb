@@ -11,10 +11,10 @@ module DMARCator
       include Internal::XmlHelper
 
       # Attribute names exposed by this class.
-      ATTRIBUTES = [
-        :org_name, :email, :extra_contact_info, :report_id,
-        :begin_at, :end_at, :errors
-      ]
+      ATTRIBUTES = %i[
+        org_name email extra_contact_info report_id
+        begin_at end_at errors
+      ].freeze
 
       # @!attribute [r] org_name
       #   @return [String, nil] the reporting organization.

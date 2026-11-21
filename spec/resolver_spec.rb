@@ -82,14 +82,14 @@ RSpec.describe 'encrypted DNS transports' do
   # Encodes a response to +query+, echoing its id and question so the
   # transport's validation passes.
   #
-  def response_for(query, answers: [], rcode: 0, tc: 0, question: nil, id: nil)
+  def response_for(query, answers: [], rcode: 0, truncated: 0, question: nil, id: nil)
     question_name, question_type = query.question.first
 
     message = Resolv::DNS::Message.new(id || query.id)
     message.qr = 1
     message.rd = 1
     message.ra = 1
-    message.tc = tc
+    message.tc = truncated
     message.rcode = rcode
     message.add_question(question || question_name, question_type)
 
@@ -214,7 +214,7 @@ RSpec.describe 'encrypted DNS transports' do
 
     it 'raises on a truncated response' do
       allow(resolver).to receive(:exchange) do |query|
-        response_for(query, tc: 1)
+        response_for(query, truncated: 1)
       end
 
       expect {

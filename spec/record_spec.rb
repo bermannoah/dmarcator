@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'dmarcator/record'
 
@@ -39,19 +41,19 @@ RSpec.describe DMARCator::Record do
 
     describe "#adkim" do
       it "should return :r" do
-        expect(subject.adkim).to be == :r
+        expect(subject.adkim).to eq :r
       end
     end
 
     describe "#aspf" do
       it "should return :r" do
-        expect(subject.aspf).to be == :r
+        expect(subject.aspf).to eq :r
       end
     end
 
     describe "#fo" do
       it "should return ['0']" do
-        expect(subject.fo).to be == ['0']
+        expect(subject.fo).to eq ['0']
       end
 
       it "returns a frozen default" do
@@ -62,19 +64,19 @@ RSpec.describe DMARCator::Record do
 
     describe "#pct" do
       it "should return 100" do
-        expect(subject.pct).to be == 100
+        expect(subject.pct).to eq 100
       end
     end
 
     describe "#rf" do
       it "should return afrf" do
-        expect(subject.rf).to be == :afrf
+        expect(subject.rf).to eq :afrf
       end
     end
 
     describe "#ri" do
       it "should return 86400" do
-        expect(subject.ri).to be == 86400
+        expect(subject.ri).to eq 86_400
       end
     end
   end
@@ -223,8 +225,8 @@ RSpec.describe DMARCator::Record do
 
         record = subject.lookup("google.com")
 
-        expect(record).to be_kind_of(DMARCator::Record)
-        expect(record.v).to be == :DMARC1
+        expect(record).to be_a(DMARCator::Record)
+        expect(record.v).to eq :DMARC1
       end
     end
 
@@ -239,7 +241,7 @@ RSpec.describe DMARCator::Record do
     end
   end
 
-  shared_examples "question mark method" do |field,value|
+  shared_examples "question mark method" do |field, value|
     describe "#{field}?" do
       context "when #{field} is set" do
         subject do
@@ -263,15 +265,10 @@ RSpec.describe DMARCator::Record do
   include_examples "question mark method", :p, :reject
   include_examples "question mark method", :pct, 100
   include_examples "question mark method", :rf, :afrf
-  include_examples "question mark method", :ri, 86400
+  include_examples "question mark method", :ri, 86_400
   include_examples "question mark method", :rua, [URI("mailto:bob@example.com")]
   include_examples "question mark method", :ruf, [URI("mailto:bob@example.com")]
   include_examples "question mark method", :sp, :reject
-
-  describe "#sp?" do
-    context "when sp is set" do
-    end
-  end
 
   describe "#to_h" do
     let(:v) { :DMARC1 }
@@ -291,17 +288,19 @@ RSpec.describe DMARCator::Record do
     end
 
     it "should return a Hash" do
-      expect(subject.to_h).to be_kind_of(Hash)
+      expect(subject.to_h).to be_a(Hash)
     end
 
     it "should only include fields that have values" do
-      expect(subject.to_h).to be == {
+      expected = {
         v: v,
         p: p,
         rua: rua,
         ruf: ruf,
         fo: fo
       }
+
+      expect(subject.to_h).to eq(expected)
     end
   end
 
@@ -323,7 +322,7 @@ RSpec.describe DMARCator::Record do
     end
 
     it "should convert the record to a String" do
-      expect(subject.to_s).to be == "v=#{v}; p=#{p}; rua=#{rua[0]}; ruf=#{ruf[0]}; fo=#{fo[0]}:#{fo[1]}:#{fo[2]}"
+      expect(subject.to_s).to eq "v=#{v}; p=#{p}; rua=#{rua[0]}; ruf=#{ruf[0]}; fo=#{fo[0]}:#{fo[1]}:#{fo[2]}"
     end
 
     it "preserves report URI sizes and units" do

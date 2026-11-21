@@ -11,7 +11,7 @@ module DMARCator
       include Internal::XmlHelper
 
       # Attribute names exposed by this class.
-      ATTRIBUTES = [:domain, :adkim, :aspf, :p, :sp, :pct, :fo]
+      ATTRIBUTES = %i[domain adkim aspf p sp pct fo].freeze
 
       # @!attribute [r] domain
       #   @return [String, nil] the domain the policy applies to.

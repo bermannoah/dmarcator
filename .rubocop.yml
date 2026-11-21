@@ -1,0 +1,80 @@
+plugins:
+  - rubocop-performance
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: disable
+  SuggestExtensions: false
+  Exclude:
+    - 'coverage/**/*'
+    - 'gemfiles/**/*'
+    - 'vendor/**/*'
+
+# Parsing and validation are intentionally linear; splitting them to satisfy a
+# metric would make them harder to follow.
+Metrics:
+  Enabled: false
+
+# The library uses single quotes; the specs use double quotes for descriptions.
+Style/StringLiterals:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+# Multi-line `expect { ... }` blocks are idiomatic in this suite.
+Style/BlockDelimiters:
+  Enabled: false
+
+# Multi-line guards read better than their modifier form in the parser.
+Style/IfUnlessModifier:
+  Enabled: false
+
+# `Uri#to_str` is built with concatenation, and a spec asserts `String#+`.
+Style/StringConcatenation:
+  Enabled: false
+
+Style/MultilineBlockChain:
+  Enabled: false
+
+# The DMARCator module is documented once, in dmarcator.rb.
+Style/Documentation:
+  Enabled: false
+
+# The codebase consistently names rescued exceptions `error`.
+Naming/RescuedExceptionsVariableName:
+  PreferredName: error
+
+# The suite deliberately uses unnamed subjects, long examples with several
+# expectations, and `should` wording.
+RSpec/NamedSubject:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/ExampleWording:
+  Enabled: false
+RSpec/DescribeClass:
+  Enabled: false
+RSpec/SpecFilePathFormat:
+  Enabled: false
+RSpec/SubjectStub:
+  Enabled: false
+RSpec/LeadingSubject:
+  Enabled: false
+RSpec/NestedGroups:
+  Enabled: false
+RSpec/VerifiedDoubles:
+  Enabled: false
+RSpec/MessageSpies:
+  Enabled: false
+RSpec/StubbedMock:
+  Enabled: false
+RSpec/ContextWording:
+  Enabled: false
+RSpec/MultipleDescribes:
+  Enabled: false
+RSpec/DescribedClass:
+  Enabled: false

@@ -93,6 +93,8 @@ module DMARCator
       end
 
       def initialize(host:, port: DEFAULT_PORT, sni: nil, timeout: DEFAULT_TIMEOUT)
+        super()
+
         @host = host
         @port = port
         @sni = sni || host
@@ -150,7 +152,7 @@ module DMARCator
         IPAddr.new(value.to_s)
 
         true
-      rescue IPAddr::Error, ArgumentError
+      rescue ArgumentError
         false
       end
 

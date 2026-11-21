@@ -101,9 +101,9 @@ module DMARCator
 
       @version = begin
         value = get_text('feedback/version')
-        value = value.strip if value
+        value = value&.strip
 
-        value.freeze if value && value.match?(/\A\d+(?:\.\d+)*\z/)
+        value.freeze if value&.match?(/\A\d+(?:\.\d+)*\z/)
       end
     end
 

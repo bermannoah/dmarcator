@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'dmarcator'
 
@@ -10,7 +12,9 @@ RSpec.describe DMARCator::Config do
     end
 
     it 'is memoized' do
-      expect(DMARCator.config).to be(DMARCator.config)
+      config = DMARCator.config
+
+      expect(DMARCator.config).to be(config)
     end
   end
 
@@ -40,7 +44,12 @@ RSpec.describe DMARCator::Config do
     it 'calls a configured callable for each lookup' do
       resolvers = [double('one'), double('two')]
       calls = 0
-      DMARCator.configure { |config| config.resolver = -> { calls += 1; resolvers[calls - 1] } }
+      DMARCator.configure { |config|
+        config.resolver = lambda {
+          calls += 1
+          resolvers[calls - 1]
+        }
+      }
 
       expect(DMARCator.default_resolver).to be(resolvers[0])
       expect(DMARCator.default_resolver).to be(resolvers[1])

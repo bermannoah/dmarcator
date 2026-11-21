@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'dmarcator'
 
@@ -26,9 +28,9 @@ RSpec.describe DMARCator do
       allow(resolver).to receive(:getresources)
         .with("_dmarc.google.com", txt_class)
         .and_return([
-          txt(["not a dmarc record"]),
-          txt(["v=DMARC1; p=reject"])
-        ])
+                      txt(["not a dmarc record"]),
+                      txt(["v=DMARC1; p=reject"])
+                    ])
 
       expect(subject.dmarc("google.com", resolver: resolver)).to eq("v=DMARC1; p=reject")
     end
@@ -97,16 +99,16 @@ RSpec.describe DMARCator do
       allow(resolver).to receive(:getresources)
         .with("example.com", txt_class)
         .and_return([
-          txt(["v=spf1 include:_spf.example.com -all"]),
-          txt(["google-site-verification=abc"]),
-          txt(["v=DMARC1; p=none"])
-        ])
+                      txt(["v=spf1 include:_spf.example.com -all"]),
+                      txt(["google-site-verification=abc"]),
+                      txt(["v=DMARC1; p=none"])
+                    ])
 
       expect(subject.txt("example.com", resolver: resolver)).to eq([
-        "v=spf1 include:_spf.example.com -all",
-        "google-site-verification=abc",
-        "v=DMARC1; p=none"
-      ])
+                                                                     "v=spf1 include:_spf.example.com -all",
+                                                                     "google-site-verification=abc",
+                                                                     "v=DMARC1; p=none"
+                                                                   ])
     end
 
     it "joins multi-chunk records without a separator" do
@@ -236,7 +238,7 @@ RSpec.describe DMARCator do
 
     it "agrees with txt" do
       allow(resolver).to receive(:getresources)
-        .and_return([txt(["a"]), txt(["b", "c"])])
+        .and_return([txt(["a"]), txt(%w[b c])])
 
       expect(subject.txt_records("example.com", resolver: resolver).map { |r| r.strings.join })
         .to eq(subject.txt("example.com", resolver: resolver))

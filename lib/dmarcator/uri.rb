@@ -9,7 +9,6 @@ module DMARCator
   # @since 0.5.0
   #
   class Uri
-
     # The `mailto:` URI.
     #
     # @return [URI::MailTo]
@@ -40,7 +39,7 @@ module DMARCator
     # @param [:k, :m, :g, :t] unit
     #   The optional size unit.
     #
-    def initialize(uri,size=nil,unit=nil)
+    def initialize(uri, size = nil, unit = nil)
       @uri = uri.freeze
 
       @size = size
@@ -77,9 +76,9 @@ module DMARCator
     #
     def ==(other)
       (self.class == other.class) &&
-      (@uri == other.uri) &&
-      (@size == other.size) &&
-      (@unit == other.unit)
+        (@uri == other.uri) &&
+        (@size == other.size) &&
+        (@unit == other.unit)
     end
 
     #
@@ -111,13 +110,13 @@ module DMARCator
     def to_s
       str = @uri.to_s
 
-      if (@size || @unit)
+      if @size || @unit
         str << "!"
-        str << "#{@size}" if @size
-        str << "#{@unit}" if @unit
+        str << @size.to_s if @size
+        str << @unit.to_s if @unit
       end
 
-      return str
+      str
     end
 
     #
@@ -143,10 +142,10 @@ module DMARCator
     # Private methods are not forwarded: delegation is limited to the wrapped
     # URI's public interface.
     #
-    def method_missing(name,*arguments,&block)
+    def method_missing(name, *arguments, &block)
       return super unless @uri.respond_to?(name)
 
-      @uri.public_send(name,*arguments,&block)
+      @uri.public_send(name, *arguments, &block)
     end
 
     #
@@ -157,6 +156,5 @@ module DMARCator
     def respond_to_missing?(name, include_private = false)
       @uri.respond_to?(name) || super
     end
-
   end
 end

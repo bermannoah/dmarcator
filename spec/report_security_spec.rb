@@ -333,11 +333,13 @@ RSpec.describe 'DMARC XML report hardening' do
                   "<feedback #{Array.new(rng.rand(0..30)) { |j| "a#{j}=\"v\"" }.join}>x</feedback>"
                 end
 
-        begin
-          DMARCator::Report.new(input)
-        rescue DMARCator::Error
-          # expected: any library error is acceptable
-        end
+        expect {
+          begin
+            DMARCator::Report.new(input)
+          rescue DMARCator::Error
+            # expected: any library error is acceptable
+          end
+        }.not_to raise_error
       end
     end
 
@@ -348,12 +350,14 @@ RSpec.describe 'DMARC XML report hardening' do
         xml = "<feedback>#{random_balanced_xml(rng)}</feedback>"
         guard = DMARCator::Internal::XmlGuard.new(xml)
 
-        begin
-          guard.check!
-          guard.document
-        rescue DMARCator::Error
-          # expected
-        end
+        expect {
+          begin
+            guard.check!
+            guard.document
+          rescue DMARCator::Error
+            # expected
+          end
+        }.not_to raise_error
       end
     end
   end

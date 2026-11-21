@@ -13,7 +13,6 @@ module DMARCator
   # @see https://www.rfc-editor.org/rfc/rfc7489
   #
   class Record
-
     # `p` field.
     #
     # @return [:none, :quarantine, :reject]
@@ -66,7 +65,7 @@ module DMARCator
     #
     # @option attributes [:DMARC1] :v
     #
-    def initialize(attributes={})
+    def initialize(attributes = {})
       @v     = attributes.fetch(:v)
       @adkim = attributes[:adkim]
       @aspf  = attributes[:aspf]
@@ -209,7 +208,7 @@ module DMARCator
 
     #
     # `rf` field.
-    # 
+    #
     # @return [:afrf, :iodef]
     #   The value of the `rf=` field, or `:afrf` if the field was omitted.
     #
@@ -235,7 +234,7 @@ module DMARCator
     #   The value of the `ri=` field, or `86400` if the field was omitted.
     #
     def ri
-      @ri || 86400
+      @ri || 86_400
     end
 
     #
@@ -343,7 +342,7 @@ module DMARCator
       hash[:rf]    = @rf    if @rf
       hash[:pct]   = @pct   if @pct
 
-      return hash
+      hash
     end
 
     #
@@ -366,8 +365,7 @@ module DMARCator
       tags << "rf=#{@rf}"             if @rf
       tags << "pct=#{@pct}"           if @pct
 
-      return tags.join('; ')
+      tags.join('; ')
     end
-
   end
 end

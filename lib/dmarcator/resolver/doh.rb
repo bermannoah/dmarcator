@@ -75,6 +75,8 @@ module DMARCator
       end
 
       def initialize(url:, ipaddr: nil, timeout: DEFAULT_TIMEOUT)
+        super()
+
         @url = URI.parse(url)
 
         unless @url.is_a?(URI::HTTPS) && @url.host

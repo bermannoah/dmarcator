@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'dmarcator/uri'
 
@@ -6,7 +8,7 @@ RSpec.describe DMARCator::Uri do
   let(:size) { 10 }
   let(:unit) { :m }
 
-  subject { described_class.new(uri,size,unit) }
+  subject { described_class.new(uri, size, unit) }
 
   describe "#initialize" do
     it "should set the uri" do
@@ -30,23 +32,23 @@ RSpec.describe DMARCator::Uri do
       subject { described_class.new(uri) }
 
       it "should set size to nil" do
-        expect(subject.size).to be(nil)
+        expect(subject.size).to be_nil
       end
 
       it "should set unit to nil" do
-        expect(subject.unit).to be(nil)
+        expect(subject.unit).to be_nil
       end
     end
 
     context "when unit is omitted" do
-      subject { described_class.new(uri,size) }
+      subject { described_class.new(uri, size) }
 
       it "should set size" do
         expect(subject.size).to be(size)
       end
 
       it "should set unit to nil" do
-        expect(subject.unit).to be(nil)
+        expect(subject.unit).to be_nil
       end
     end
   end
@@ -59,7 +61,7 @@ RSpec.describe DMARCator::Uri do
     end
 
     context "when size is set" do
-      subject { described_class.new(uri,size) }
+      subject { described_class.new(uri, size) }
 
       it { expect(subject.size?).to be(true) }
     end
@@ -67,13 +69,13 @@ RSpec.describe DMARCator::Uri do
 
   describe "#unit?" do
     context "when unit is nil" do
-      subject { described_class.new(uri,size) }
+      subject { described_class.new(uri, size) }
 
       it { expect(subject.unit?).to be(false) }
     end
 
     context "when unit is set" do
-      subject { described_class.new(uri,size,unit) }
+      subject { described_class.new(uri, size, unit) }
 
       it { expect(subject.unit?).to be(true) }
     end
@@ -82,26 +84,26 @@ RSpec.describe DMARCator::Uri do
   describe "#==" do
     context "when other is a #{described_class}" do
       context "and all fields match" do
-        let(:other) { described_class.new(uri.dup,size,unit) }
+        let(:other) { described_class.new(uri.dup, size, unit) }
 
         it { expect(subject == other).to be(true) }
       end
 
       context "but the uri is different" do
-        let(:other_uri) { URI("mailto:foo@example.com")            }
-        let(:other)     { described_class.new(other_uri,size,unit) }
+        let(:other_uri) { URI("mailto:foo@example.com") }
+        let(:other)     { described_class.new(other_uri, size, unit) }
 
         it { expect(subject == other).to be(false) }
       end
 
       context "but the size is different" do
-        let(:other) { described_class.new(uri,42,unit) }
+        let(:other) { described_class.new(uri, 42, unit) }
 
         it { expect(subject == other).to be(false) }
       end
 
       context "but the unit is different" do
-        let(:other) { described_class.new(uri,size,:t) }
+        let(:other) { described_class.new(uri, size, :t) }
 
         it { expect(subject == other).to be(false) }
       end
@@ -165,33 +167,33 @@ RSpec.describe DMARCator::Uri do
       subject { described_class.new(uri) }
 
       it "should return the uri" do
-        expect(subject.to_s).to be == uri.to_s
+        expect(subject.to_s).to eq uri.to_s
       end
     end
 
     context "when uri and size are set" do
-      subject { described_class.new(uri,size) }
+      subject { described_class.new(uri, size) }
 
       it "should return the uri!size" do
-        expect(subject.to_s).to be == "#{uri}!#{size}"
+        expect(subject.to_s).to eq "#{uri}!#{size}"
       end
     end
 
     context "when uri, size and unit are set" do
       it "should return the uri!size" do
-        expect(subject.to_s).to be == "#{uri}!#{size}#{unit}"
+        expect(subject.to_s).to eq "#{uri}!#{size}#{unit}"
       end
     end
   end
 
   describe "#to_str" do
     it "should return the same form as #to_s" do
-      expect(subject.to_str).to be == "#{uri}!#{size}#{unit}"
+      expect(subject.to_str).to eq "#{uri}!#{size}#{unit}"
     end
 
     it "should be used by Array#join and String#+" do
-      expect([subject].join(",")).to be == subject.to_s
-      expect("x" + subject).to be == "x#{subject}"
+      expect([subject].join(",")).to eq subject.to_s
+      expect("x" + subject).to eq "x#{subject}"
     end
   end
 

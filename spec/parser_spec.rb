@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 require 'dmarcator'
 
@@ -175,7 +177,7 @@ RSpec.describe DMARCator::Internal::Parser do
       end
 
       it 'accepts ASCII-compatible encodings' do
-        ['ISO-8859-1', 'Shift_JIS', 'US-ASCII'].each do |encoding|
+        %w[ISO-8859-1 Shift_JIS US-ASCII].each do |encoding|
           record = 'v=DMARC1; p=none'.encode(encoding)
 
           expect(subject.parse(record)[:p]).to eq(:none), encoding

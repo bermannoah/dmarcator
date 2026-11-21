@@ -11,7 +11,7 @@ module DMARCator
       include Internal::XmlHelper
 
       # Attribute names exposed by this class.
-      ATTRIBUTES = [:type, :comment]
+      ATTRIBUTES = %i[type comment].freeze
 
       # @!attribute [r] type
       #   @return [String, nil] the reason type.

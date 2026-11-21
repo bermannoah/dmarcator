@@ -16,10 +16,10 @@ module DMARCator
       include Internal::XmlHelper
 
       # Attribute names exposed by this class.
-      ATTRIBUTES = [
-        :source_ip, :count, :disposition, :dkim, :spf,
-        :envelope_to, :envelope_from, :header_from
-      ]
+      ATTRIBUTES = %i[
+        source_ip count disposition dkim spf
+        envelope_to envelope_from header_from
+      ].freeze
 
       # @!attribute [r] source_ip
       #   @return [String, nil] the sending IP address.

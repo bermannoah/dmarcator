@@ -193,8 +193,8 @@ module DMARCator
             stack.pop
           end
         end
-      rescue Nokogiri::XML::SyntaxError => e
-        raise InvalidReport, sanitize_syntax_error(e)
+      rescue Nokogiri::XML::SyntaxError => error
+        raise InvalidReport, sanitize_syntax_error(error)
       end
 
       def enforce(setting, value)
@@ -221,11 +221,9 @@ module DMARCator
       end
 
       def parse_document
-        document = Nokogiri::XML.parse(@xml, nil, nil, self.class.parse_options)
-
-        document
-      rescue Nokogiri::XML::SyntaxError => e
-        raise InvalidReport, sanitize_syntax_error(e)
+        Nokogiri::XML.parse(@xml, nil, nil, self.class.parse_options)
+      rescue Nokogiri::XML::SyntaxError => error
+        raise InvalidReport, sanitize_syntax_error(error)
       end
     end
   end

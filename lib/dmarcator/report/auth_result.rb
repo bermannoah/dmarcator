@@ -11,7 +11,7 @@ module DMARCator
       include Internal::XmlHelper
 
       # Attribute names exposed by this class.
-      ATTRIBUTES = [:type, :domain, :result, :selector, :scope]
+      ATTRIBUTES = %i[type domain result selector scope].freeze
 
       # @!attribute [r] type
       #   @return [String] the entry name (`dkim` or `spf`).

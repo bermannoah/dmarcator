@@ -72,6 +72,8 @@ module DMARCator
       end
 
       def initialize(nameservers: nil, timeout: DEFAULT_TIMEOUT)
+        super()
+
         @nameservers = (nameservers || self.class.system_nameservers).freeze
         @timeout = timeout
 
@@ -85,13 +87,11 @@ module DMARCator
         last_error = nil
 
         @nameservers.each do |host, port|
-          begin
-            return request(host, port, wire)
-          rescue ResolutionError, SystemCallError, SocketError, IOError => error
-            # Try the remaining nameservers, but do not swallow an error that
-            # indicates a bug in the transport.
-            last_error = error
-          end
+          return request(host, port, wire)
+        rescue ResolutionError, SystemCallError, SocketError, IOError => error
+          # Try the remaining nameservers, but do not swallow an error that
+          # indicates a bug in the transport.
+          last_error = error
         end
 
         raise ResolutionError,

@@ -1,5 +1,6 @@
-# coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
+# frozen_string_literal: true
+
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'dmarcator/version'
 
@@ -14,9 +15,9 @@ Gem::Specification.new do |gem|
   gem.homepage      = "https://github.com/bermannoah/dmarcator"
 
   gem.metadata = {
-    "source_code_uri"   => "https://github.com/bermannoah/dmarcator",
-    "bug_tracker_uri"   => "https://github.com/bermannoah/dmarcator/issues",
-    "changelog_uri"     => "https://github.com/bermannoah/dmarcator/blob/main/ChangeLog.md",
+    "source_code_uri" => "https://github.com/bermannoah/dmarcator",
+    "bug_tracker_uri" => "https://github.com/bermannoah/dmarcator/issues",
+    "changelog_uri" => "https://github.com/bermannoah/dmarcator/blob/main/ChangeLog.md",
     "documentation_uri" => "https://rubydoc.info/gems/dmarcator",
     "rubygems_mfa_required" => "true"
   }
