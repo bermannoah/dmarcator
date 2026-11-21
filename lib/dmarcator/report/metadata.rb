@@ -38,6 +38,12 @@ module DMARCator
 
         metadata = node.at_xpath('feedback/report_metadata')
 
+        # `report_metadata` is required by the DMARC schema, but the XML guard
+        # only enforces the `<feedback>` root, so an attacker-supplied report can
+        # omit it. Treat it like a missing `policy_published` rather than
+        # raising NoMethodError out of a public accessor.
+        return unless metadata
+
         metadata.element_children.each do |element|
           case element.name
           when 'org_name'

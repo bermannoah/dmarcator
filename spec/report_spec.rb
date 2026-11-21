@@ -100,6 +100,26 @@ RSpec.describe DMARCator::Report do
     expect(report.metadata.begin_at).to eq(Time.at(1_593_648_000))
   end
 
+  it 'returns empty metadata when report_metadata is absent' do
+    report = described_class.new('<feedback/>')
+
+    expect(report.metadata.org_name).to be_nil
+    expect(report.metadata.begin_at).to be_nil
+    expect(report.metadata.end_at).to be_nil
+    expect(report.metadata.errors).to eq([])
+    expect(report.policy.domain).to be_nil
+    expect(report.records).to eq([])
+  end
+
+  it 'still parses the rest of a report without report_metadata' do
+    report = described_class.new(
+      '<feedback><record><row><source_ip>192.0.2.1</source_ip></row></record></feedback>'
+    )
+
+    expect(report.metadata.report_id).to be_nil
+    expect(report.records.first.source_ip).to eq('192.0.2.1')
+  end
+
   it 'returns nil for a non-numeric count' do
     report = described_class.new('<feedback><record><row><count>abc</count></row></record></feedback>')
 
