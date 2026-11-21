@@ -1,0 +1,11 @@
+source 'https://rubygems.org'
+
+# Load the gem and its runtime dependencies from the gemspec, then pin the
+# oldest nokogiri the gemspec permits so the floor is exercised in CI.
+gemspec path: '..'
+
+gem 'nokogiri', '1.19.5'
+
+group :development do
+  gem 'rspec', '~> 3.0'
+end
