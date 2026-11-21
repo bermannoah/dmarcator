@@ -15,7 +15,7 @@ require_relative 'support/record_corpus'
 # The "anchored" example below keeps the corpus from drifting wholesale: it
 # states expected behaviour independently of the recorded file.
 #
-describe 'record parser corpus' do
+RSpec.describe 'record parser corpus' do
   cases = JSON.parse(File.read(File.expand_path('support/record_corpus.json', __dir__)))
 
   it 'replays every recorded outcome' do

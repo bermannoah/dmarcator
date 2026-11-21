@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'dmarcator/record'
 
-describe DMARCator::Record do
+RSpec.describe DMARCator::Record do
   describe '#initialize' do
     let(:attributes) do
       {

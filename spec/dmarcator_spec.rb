@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'dmarcator'
 
-describe DMARCator do
+RSpec.describe DMARCator do
   subject { described_class }
 
   let(:txt_class) { Resolv::DNS::Resource::IN::TXT }

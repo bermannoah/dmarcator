@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'dmarcator/uri'
 
-describe DMARCator::Uri do
+RSpec.describe DMARCator::Uri do
   let(:uri)  { URI("mailto:d@ruf.agari.com") }
   let(:size) { 10 }
   let(:unit) { :m }
