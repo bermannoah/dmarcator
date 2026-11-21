@@ -63,23 +63,37 @@ RSpec.describe DMARCator::Internal::Parser do
 
     context 'with invalid tag values' do
       it 'ignores the tag' do
-        expect(subject.parse('v=DMARC1;p=none;sp=REJECT;adkim=X')).to eq(
+        expect(subject.parse('v=DMARC1;p=none;sp=bogus;adkim=X')).to eq(
           v: :DMARC1, p: :none
         )
       end
 
       it 'raises in strict mode' do
         expect {
-          subject.parse('v=DMARC1;p=none;sp=REJECT', strict: true)
+          subject.parse('v=DMARC1;p=none;sp=bogus', strict: true)
         }.to raise_error(DMARCator::InvalidRecord, /invalid DMARC tag value/)
       end
 
-      it 'treats a known tag with an empty value as unknown' do
+      it 'treats a known tag with an empty value as empty' do
         expect(subject.parse('v=DMARC1;p=none;fo=')).to eq(v: :DMARC1, p: :none)
 
         expect {
           subject.parse('v=DMARC1;p=none;fo=', strict: true)
-        }.to raise_error(DMARCator::InvalidRecord, /unknown DMARC tag/)
+        }.to raise_error(DMARCator::InvalidRecord, /empty DMARC tag value/)
+      end
+    end
+
+    context 'with mixed-case tags and values' do
+      it 'parses them case-insensitively and normalizes the values' do
+        expect(
+          subject.parse('V=DMARC1; P=REJECT; SP=Quarantine; ADKIM=S; ASPF=R; RF=AFRF; FO=1:D')
+        ).to eq(
+          v: :DMARC1, p: :reject, sp: :quarantine, adkim: :s, aspf: :r, rf: :afrf, fo: %w[1 d]
+        )
+      end
+
+      it 'keeps the version string exact' do
+        expect { subject.parse('v=dmarc1; p=none') }.to raise_error(DMARCator::InvalidRecord)
       end
     end
 
@@ -88,6 +102,12 @@ RSpec.describe DMARCator::Internal::Parser do
         expect {
           subject.parse('v=DMARC1;p=none;p=reject')
         }.to raise_error(DMARCator::InvalidRecord, /duplicate DMARC tag: p/)
+      end
+
+      it 'rejects a duplicate version tag' do
+        expect {
+          subject.parse('v=DMARC1;p=none;v=DMARC1')
+        }.to raise_error(DMARCator::InvalidRecord, /duplicate DMARC version tag/)
       end
     end
 
@@ -107,7 +127,7 @@ RSpec.describe DMARCator::Internal::Parser do
 
     context 'with a malformed record' do
       it 'requires the version tag first' do
-        ['', ';v=DMARC1', 'DMARC1;p=none', 'V=DMARC1;p=none', 'v=dmarc1;p=none',
+        ['', ';v=DMARC1', 'DMARC1;p=none', 'v=dmarc1;p=none',
          'v=XXXXXXXXXX'].each do |record|
           expect { subject.parse(record) }.to raise_error(DMARCator::InvalidRecord), record.inspect
         end
@@ -194,6 +214,27 @@ RSpec.describe DMARCator::Internal::Parser do
       it 'accepts every unit' do
         uri = subject.parse('v=DMARC1;p=none;rua=mailto:a@b.com!1k')[:rua].first
         expect(uri.unit).to eq(:k)
+      end
+
+      it 'accepts a case-insensitive unit and normalizes it' do
+        uri = subject.parse('v=DMARC1;p=none;rua=mailto:a@b.com!1M')[:rua].first
+
+        expect(uri.size).to eq(1)
+        expect(uri.unit).to eq(:m)
+      end
+
+      it 'accepts a size that fits an unsigned 64-bit integer' do
+        uri = subject.parse(
+          'v=DMARC1;p=none;rua=mailto:a@b.com!18446744073709551615k'
+        )[:rua].first
+
+        expect(uri.size).to eq((2**64) - 1)
+      end
+
+      it 'ignores a size that exceeds an unsigned 64-bit integer' do
+        expect(
+          subject.parse('v=DMARC1;p=none;rua=mailto:a@b.com!18446744073709551616k')
+        ).to eq(v: :DMARC1, p: :none)
       end
 
       it 'accepts an upper-case scheme' do

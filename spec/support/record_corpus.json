@@ -6298,16 +6298,7 @@
   {
     "record": "v=DMARC1;p=none; v=DMARC1",
     "lenient": {
-      "ok": [
-        [
-          "p",
-          "none"
-        ],
-        [
-          "v",
-          "DMARC1"
-        ]
-      ]
+      "error": "DMARCator::InvalidRecord"
     },
     "strict": {
       "error": "DMARCator::InvalidRecord"
@@ -6322,13 +6313,30 @@
           "none"
         ],
         [
+          "sp",
+          "reject"
+        ],
+        [
           "v",
           "DMARC1"
         ]
       ]
     },
     "strict": {
-      "error": "DMARCator::InvalidRecord"
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "sp",
+          "reject"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
     }
   },
   {
@@ -6706,10 +6714,28 @@
   {
     "record": "V=DMARC1;p=none",
     "lenient": {
-      "error": "DMARCator::InvalidRecord"
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
     },
     "strict": {
-      "error": "DMARCator::InvalidRecord"
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
     }
   },
   {
@@ -6863,10 +6889,48 @@
   {
     "record": "v=DMARC1;p=none;rua=mailto:a@b.com!1K",
     "lenient": {
-      "error": "DMARCator::InvalidRecord"
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:a@b.com",
+              "size": 1,
+              "unit": "k"
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
     },
     "strict": {
-      "error": "DMARCator::InvalidRecord"
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:a@b.com",
+              "size": 1,
+              "unit": "k"
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
     }
   },
   {
@@ -7712,6 +7776,283 @@
           "DMARC1"
         ]
       ]
+    }
+  },
+  {
+    "record": "V=DMARC1; P=Reject; SP=QUARANTINE; ADKIM=S; ASPF=R; RF=AFRF; FO=1:D",
+    "lenient": {
+      "ok": [
+        [
+          "adkim",
+          "s"
+        ],
+        [
+          "aspf",
+          "r"
+        ],
+        [
+          "fo",
+          [
+            "1",
+            "d"
+          ]
+        ],
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "rf",
+          "afrf"
+        ],
+        [
+          "sp",
+          "quarantine"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    },
+    "strict": {
+      "ok": [
+        [
+          "adkim",
+          "s"
+        ],
+        [
+          "aspf",
+          "r"
+        ],
+        [
+          "fo",
+          [
+            "1",
+            "d"
+          ]
+        ],
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "rf",
+          "afrf"
+        ],
+        [
+          "sp",
+          "quarantine"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    }
+  },
+  {
+    "record": "v=DMARC1; p=REJECT",
+    "lenient": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    },
+    "strict": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    }
+  },
+  {
+    "record": "v=DMARC1; P=none; rua=MAILTO:d@example.com",
+    "lenient": {
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:d@example.com",
+              "size": null,
+              "unit": null
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    },
+    "strict": {
+      "ok": [
+        [
+          "p",
+          "none"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:d@example.com",
+              "size": null,
+              "unit": null
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    }
+  },
+  {
+    "record": "v=DMARC1; p=reject; rua=mailto:d@example.com!10M",
+    "lenient": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:d@example.com",
+              "size": 10,
+              "unit": "m"
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    },
+    "strict": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:d@example.com",
+              "size": 10,
+              "unit": "m"
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    }
+  },
+  {
+    "record": "v=DMARC1; p=reject; rua=mailto:d@example.com!18446744073709551615k",
+    "lenient": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:d@example.com",
+              "size": 18446744073709551615,
+              "unit": "k"
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    },
+    "strict": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "rua",
+          [
+            {
+              "uri": "mailto:d@example.com",
+              "size": 18446744073709551615,
+              "unit": "k"
+            }
+          ]
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    }
+  },
+  {
+    "record": "v=DMARC1; p=reject; rua=mailto:d@example.com!18446744073709551616k",
+    "lenient": {
+      "ok": [
+        [
+          "p",
+          "reject"
+        ],
+        [
+          "v",
+          "DMARC1"
+        ]
+      ]
+    },
+    "strict": {
+      "error": "DMARCator::InvalidRecord"
+    }
+  },
+  {
+    "record": "v=DMARC1; v=DMARC1; p=reject",
+    "lenient": {
+      "error": "DMARCator::InvalidRecord"
+    },
+    "strict": {
+      "error": "DMARCator::InvalidRecord"
+    }
+  },
+  {
+    "record": "v=DMARC1; p=",
+    "lenient": {
+      "error": "DMARCator::InvalidRecord"
+    },
+    "strict": {
+      "error": "DMARCator::InvalidRecord"
     }
   }
 ]

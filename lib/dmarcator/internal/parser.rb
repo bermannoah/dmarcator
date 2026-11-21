@@ -48,8 +48,15 @@ module DMARCator
       # Tags whose value is a list of mailto URIs.
       URI_TAGS = %w[rua ruf].freeze
 
+      # Every tag the parser understands.
+      KNOWN_TAGS = (KEYWORD_TAGS.keys + DIGIT_TAGS.keys + %w[fo] + URI_TAGS).freeze
+
       # The `v=` tag, which may only appear first.
-      VERSION = /\Av[ \t]*=[ \t]*DMARC1\z/
+      #
+      # RFC 7489 spells the version with ABNF quoted strings and numeric
+      # terminals, so the tag name `v` is case-insensitive (RFC 5234) while the
+      # version string `DMARC1` is exact.
+      VERSION = /\A[vV][ \t]*=[ \t]*DMARC1\z/
 
       # Characters allowed in a mailto local part and domain.
       ADDRESS = /[A-Za-z0-9._%+-]+@[A-Za-z0-9._%+-]+/
@@ -105,9 +112,15 @@ module DMARCator
               raise InvalidRecord, "duplicate DMARC tag: #{key}" if tags.key?(key)
 
               tags[key] = value
+            when :version
+              raise InvalidRecord, 'duplicate DMARC version tag'
             when :unknown
               if strict
                 raise InvalidRecord, "unknown DMARC tag: #{truncate(segment).inspect}"
+              end
+            when :empty
+              if strict
+                raise InvalidRecord, "empty DMARC tag value: #{truncate(segment).inspect}"
               end
             when :invalid
               if strict
@@ -159,11 +172,17 @@ module DMARCator
 
           return [:unknown] if value.nil?
 
-          name = name.sub(/[ \t]+\z/, '').sub(/\A[ \t]+/, '')
+          name = name.sub(/[ \t]+\z/, '').sub(/\A[ \t]+/, '').downcase(:ascii)
           value = value.sub(/\A[ \t]+/, '').sub(/[ \t]+\z/, '')
 
-          # A known tag with an empty value is not a tag at all.
-          return [:unknown] if value.empty?
+          # The version tag may only appear first, so a second one is a
+          # duplicate whatever its value.
+          return [:version] if name == 'v'
+
+          # An empty value is an error only for a tag the parser understands;
+          # an unknown tag is ignored either way.
+          return [:unknown] if value.empty? && !KNOWN_TAGS.include?(name)
+          return [:empty] if value.empty?
 
           if (keywords = KEYWORD_TAGS[name])
             keyword(name, keywords, value)
@@ -179,11 +198,13 @@ module DMARCator
         end
 
         def keyword(name, keywords, value)
-          return [:ok, name.to_sym, value.to_sym] if keywords.include?(value)
+          folded = value.downcase(:ascii)
+
+          return [:ok, name.to_sym, folded.to_sym] if keywords.include?(folded)
 
           # A known keyword followed by junk is a malformed record, not an
           # invalid value: the value grammar matched and the remainder did not.
-          malformed!(value) if keywords.any? { |keyword| value.start_with?(keyword) }
+          malformed!(value) if keywords.any? { |keyword| folded.start_with?(keyword) }
 
           [:invalid]
         end
@@ -201,9 +222,10 @@ module DMARCator
         end
 
         def fo(value)
-          return [:ok, :fo, value.split(':')] if value.match?(/\A[01ds](?::[01ds])*\z/)
+          folded = value.downcase(:ascii)
+          return [:ok, :fo, folded.split(':')] if folded.match?(/\A[01ds](?::[01ds])*\z/)
 
-          malformed!(value) if value.match?(/\A[01ds](?::[01ds])*/)
+          malformed!(value) if folded.match?(/\A[01ds](?::[01ds])*/)
 
           [:invalid]
         end
@@ -251,13 +273,17 @@ module DMARCator
           size = unit = nil
 
           if scanner.scan(/!/)
-            digits = scanner.scan(/\d{1,10}/)
+            digits = scanner.scan(/\d{1,20}/)
 
-            # A bare `!` or more than ten digits is an invalid value.
+            # A bare `!` or more than twenty digits is an invalid value.
             return nil if digits.nil? || scanner.match?(/\d/)
 
             size = digits.to_i
-            unit = scanner.scan(/[kmgt]/)&.to_sym
+
+            # RFC 7489 requires the numeric portion to fit a uint64.
+            return nil if size > (2**64) - 1
+
+            unit = scanner.scan(/[kmgt]/i)&.downcase(:ascii)&.to_sym
 
             # A second `!` is an invalid value.
             return nil if scanner.match?(/!/)

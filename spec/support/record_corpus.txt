@@ -141,3 +141,11 @@ v=DMARC1;p=none;aspf=s
 v=DMARC1; p=none; sp=none
 v=DMARC1; p=reject ; sp=reject ; pct=100 ;
 v=DMARC1;p=none;pct=99;ri=1
+V=DMARC1; P=Reject; SP=QUARANTINE; ADKIM=S; ASPF=R; RF=AFRF; FO=1:D
+v=DMARC1; p=REJECT
+v=DMARC1; P=none; rua=MAILTO:d@example.com
+v=DMARC1; p=reject; rua=mailto:d@example.com!10M
+v=DMARC1; p=reject; rua=mailto:d@example.com!18446744073709551615k
+v=DMARC1; p=reject; rua=mailto:d@example.com!18446744073709551616k
+v=DMARC1; v=DMARC1; p=reject
+v=DMARC1; p=

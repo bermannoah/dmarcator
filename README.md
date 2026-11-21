@@ -241,6 +241,10 @@ DMARCator::Record.parse("v=DMARC1; p=none; pct=abc", strict: true)
 # => DMARCator::InvalidRecord: invalid DMARC tag value: "pct=abc"
 ```
 
+Tag names and keyword values are matched case-insensitively, as RFC 7489's
+ABNF requires, and parsed values are normalized to lowercase atoms. The
+version string is the exception: `DMARC1` is exact, so `v=dmarc1` is rejected.
+
 ## Parsing XML reports
 
 Parse a DMARC aggregate/forensic report:
@@ -387,7 +391,7 @@ for the reporting policy and scope.
 * A warning is emitted at load time if the bundled `resolv` gem is affected by
   CVE-2026-80212/CVE-2026-80213.
 * Domain names are validated before resolution (labels ≤ 63 octets, total ≤
-  248 octets, no leading/trailing hyphens).
+  246 octets, no leading/trailing hyphens).
 * Optional [DNS over HTTPS and DNS over TLS](#dns-transport) transports verify
   TLS certificates and fail closed: a transport failure raises
   `DMARCator::ResolutionError` rather than being reported as a domain without a

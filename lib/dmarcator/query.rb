@@ -69,10 +69,10 @@ module DMARCator
   #
   # Validates a domain before using it in a DNS query.
   #
-  # Rejects underscores and enforces the DNS length and label limits, so this
-  # is the validator for registrable domains rather than arbitrary DNS names.
-  # {dmarc} adds the `_dmarc.` prefix; use {validate_txt_name} for service
-  # labels.
+  # Rejects underscores and enforces the DNS length and label limits, reserving
+  # the seven octets of the `_dmarc.` prefix that {dmarc} adds. This is the
+  # validator for registrable domains rather than arbitrary DNS names; use
+  # {validate_txt_name} for service labels.
   #
   # @param [String] domain
   #   The domain to validate.
@@ -85,7 +85,7 @@ module DMARCator
   #
   def self.validate_domain(domain)
     unless domain.is_a?(String) && !domain.empty? &&
-           domain.length <= 248 &&
+           domain.length <= 246 &&
            !domain.start_with?('.') &&
            !domain.include?('..') &&
            !domain.match?(/[^A-Za-z0-9.-]/) &&
@@ -249,12 +249,13 @@ module DMARCator
   def self.dmarc(domain, resolver: default_resolver)
     name = "_dmarc.#{validate_domain(domain)}"
 
-    # Per RFC 7489 §6.6.3, use the TXT record beginning with "v=DMARC1".
-    # If multiple DMARC records exist, treat the domain as having none.
+    # Per RFC 7489 §6.6.3, use the TXT record that starts with the `v=` tag for
+    # DMARC1. Tag names are case-insensitive (RFC 5234), so `V=` matches; the
+    # version string `DMARC1` is exact.
     dmarc_records = lookup_txt(name, resolver: resolver).map do |record|
       record.strings.join
     end.select do |text|
-      text.start_with?('v=DMARC1')
+      text.b.match?(/\A[vV][ \t]*=[ \t]*DMARC1[ \t]*(?:;|\z)/)
     end
 
     dmarc_records.first if dmarc_records.one?

@@ -53,6 +53,24 @@ describe DMARCator do
       expect(subject.dmarc("google.com", resolver: resolver)).to be_nil
     end
 
+    it "recognizes a case-insensitive version tag" do
+      allow(resolver).to receive(:getresources).and_return([txt(["V=DMARC1; P=REJECT"])])
+
+      expect(subject.dmarc("google.com", resolver: resolver)).to eq("V=DMARC1; P=REJECT")
+    end
+
+    it "accepts whitespace around the version tag" do
+      allow(resolver).to receive(:getresources).and_return([txt(["v = DMARC1 ; p=reject"])])
+
+      expect(subject.dmarc("google.com", resolver: resolver)).to eq("v = DMARC1 ; p=reject")
+    end
+
+    it "requires the version string to be exact" do
+      allow(resolver).to receive(:getresources).and_return([txt(["v=dmarc1; p=reject"])])
+
+      expect(subject.dmarc("google.com", resolver: resolver)).to be_nil
+    end
+
     it "raises ResolutionError when the resolver fails" do
       allow(resolver).to receive(:getresources)
         .and_raise(Resolv::ResolvError, "DNS resolv timeout: _dmarc.google.com")
@@ -255,14 +273,14 @@ describe DMARCator do
       expect(subject.validate_domain(domain)).to eq(domain)
     end
 
-    it "rejects a domain longer than 248 octets" do
-      domain = "#{'a' * 62}.#{'a' * 62}.#{'a' * 62}.#{'a' * 60}"
+    it "rejects a domain longer than 246 octets" do
+      domain = "#{'a' * 62}.#{'a' * 62}.#{'a' * 62}.#{'a' * 58}"
 
       expect { subject.validate_domain(domain) }.to raise_error(ArgumentError)
     end
 
-    it "accepts a domain at the 248-octet limit" do
-      domain = "#{'a' * 62}.#{'a' * 62}.#{'a' * 62}.#{'a' * 59}"
+    it "accepts a domain at the 246-octet limit" do
+      domain = "#{'a' * 62}.#{'a' * 62}.#{'a' * 62}.#{'a' * 57}"
 
       expect(subject.validate_domain(domain)).to eq(domain)
     end
